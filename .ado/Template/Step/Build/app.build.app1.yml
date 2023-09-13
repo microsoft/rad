@@ -1,0 +1,35 @@
+steps:
+- checkout: self
+  path: CNA
+  clean: true
+  fetchDepth: 1
+
+# IF REQUIRED, COMPILE APP AND ADD BINARIES TO ARTIFACTS
+#
+
+# - task: DotNetCoreCLI@2
+#   displayName: Restore
+#   inputs:
+#     command: restore
+#     projects: $(BuildParameters.RestoreBuildProjects)
+# - task: DotNetCoreCLI@2
+#   displayName: Build
+#   inputs:
+#     projects: $(BuildParameters.RestoreBuildProjects)
+#     arguments: --configuration $(BuildConfiguration)
+# - task: DotNetCoreCLI@2
+#   displayName: Test
+#   inputs:
+#     command: test
+#     projects: $(BuildParameters.TestProjects)
+#     arguments: --configuration $(BuildConfiguration)
+# - task: PublishTestResults@2
+#   displayName: Publish Test Results **/TEST-*.xml
+# - task: DotNetCoreCLI@2
+#   displayName: Publish
+#   inputs:
+#     command: publish
+#     publishWebProjects: True
+#     projects: $(BuildParameters.RestoreBuildProjects)
+#     arguments: --configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)
+#     zipAfterPublish: True

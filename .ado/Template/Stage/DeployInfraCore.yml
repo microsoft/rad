@@ -1,0 +1,35 @@
+parameters:
+  stageName: ""
+  displayName: ""
+  varList: []
+  environment: ""
+  poolName: ""
+  continueJobsOnError: false
+  stageCoreTimeout: 0
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: '${{ parameters.displayName }}'
+    variables:
+      - ${{ each item in parameters.varList }}:
+        - template: ${{ item.Name }}
+    jobs:
+      - template: /.ado/Template/Job/Deployment-v1.yml
+        parameters:
+          jobName: "DeployCoreInfra"
+          displayName: "Deploy Core Infra"
+          environment: ${{parameters.environment}}
+          continueOnError: ${{parameters.continueJobsOnError}}
+          timeoutInMinutes: ${{parameters.stageCoreTimeout}}
+          dependsOn: []
+          poolName: ${{parameters.poolName}}
+          varList: ${{parameters.varList}}
+          # ${{ if ne(variables.SomeVar, 'true') }}:
+          #   stepList: []
+          # ${{ if eq(variables.SomeVar, 'true') }}:
+          #   stepList: []          
+          stepList: [
+            {
+              template: "/.ado/Template/Step/InfraCore/infra.deploy.core.yml"
+            }
+          ]

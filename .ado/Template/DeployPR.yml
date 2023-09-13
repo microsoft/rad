@@ -1,0 +1,34 @@
+trigger: none
+
+variables:
+  - template: /.ado/Template/Variable/Variables-Ring0.yml
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: publish
+    displayName: 'Publish Artifacts'
+    dependsOn: []
+    steps:
+    - template: /.ado/Template/Step/Publish/publish.artifacts.yml
+
+  - job: runTests
+    displayName: 'Run Tests'
+    dependsOn:
+    - 'publish'
+
+    steps:
+    - template: /.ado/Template/Step/Shared/getArtifacts.yml
+    - template: /.ado/Template/Step/Test/infra.validate.nsg.yml
+    - template: /.ado/Template/Step/Test/infra.validate.network.yml
+    - template: /.ado/Template/Step/Test/infra.validate.appService.yml
+    - template: /.ado/Template/Step/Test/infra.validate.gwAppSvc.yml
+    - template: /.ado/Template/Step/Test/infra.validate.gwAks.yml
+    - template: /.ado/Template/Step/Test/infra.validate.aks.yml
+    - template: /.ado/Template/Step/Test/infra.validate.bastion.yml
+    - template: /.ado/Template/Step/Test/infra.validate.jumpbox.yml
+    - template: /.ado/Template/Step/Test/infra.validate.storage.yml
+    - template: /.ado/Template/Step/Test/infra.validate.workbooks.yml
+    - template: /.ado/Template/Step/Test/infra.validate.securityCenter.yml
+    - template: /.ado/Template/Step/Test/app.deploy-scan.yml

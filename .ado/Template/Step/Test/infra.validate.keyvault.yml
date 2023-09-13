@@ -1,0 +1,97 @@
+steps:
+- task: AzurePowerShell@5
+  name: UpdateDNSParameterFile_KV
+  displayName: "Update Private DNS Zones Parameters File"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
+    workingDirectory: '$(Agent.BuildDirectory)/drop'
+    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate KV Private DNS Zone Deployment'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateDnsZones/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
+    overrideParameters: >
+      -privateDnsZoneName $(kvDnsZoneName)
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployKVPrivateDnsZone-$(Build.BuildNumber)'    
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate KV Private Endpoints Deployment'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    dependsOn: 'Deploy KV Private DNS Zone'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateEndpoints/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateEndpoints/parameters.json'
+    overrideParameters: >
+      -privateEndpointName $(KVPrivateEndpointName)
+      -targetSubnetId $(PrivateEndpointTargetSubnetId)
+      -privateDNSId $(KVPrivateEndpointPrivateDNSId)
+      -serviceResourceId $(KVPrivateEndpointServiceResourceId)
+      -groupId ["vault"]
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployKVPrivateEndpoints-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate WebApp KeyVault Deployment'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/KeyVault/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/KeyVault/parameters.json'
+    overrideParameters: >
+      -keyVaultName $(KeyVaultName2)
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployKeyVault-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate KV2 Private Endpoints Deployment'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    dependsOn: 'Deploy KV Private DNS Zone'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateEndpoints/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateEndpoints/parameters.json'
+    overrideParameters: >
+      -privateEndpointName $(KV2PrivateEndpointName)
+      -targetSubnetId $(PrivateEndpointTargetSubnetId)
+      -privateDNSId $(KVPrivateEndpointPrivateDNSId)
+      -serviceResourceId $(KV2PrivateEndpointServiceResourceId)
+      -groupId ["vault"]
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployKV2PrivateEndpoints-$(Build.BuildNumber)'

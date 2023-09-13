@@ -1,0 +1,45 @@
+steps:
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate AGIC Public IP Deployment'
+  condition: and(or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both')), ne(variables['GetAGIC.AppGatewayExist'], 'true'))
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PublicIPAddresses/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PublicIPAddresses/parameters.json'
+    overrideParameters: >
+      -publicIPAddressesName $(AgicPublicIPAddressesName)
+      -workspaceId $(LogAWorkspaceId)
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployAGICPip-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate AGIC App Gateway Deployment'
+  condition: and(or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both')), ne(variables['GetAGIC.AppGatewayExist'], 'true'))
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/ApplicationGateway/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/ApplicationGateway/parameters.json'
+    overrideParameters: >
+      -applicationGatewayName $(AgicApplicationGatewayName)
+      -vNetName $(SpokeVnetName)
+      -subnetName $(AgicApplicationGatewaySubnetName)
+      -vNetResourceGroup $(TargetResourceGroupCore)
+      -frontendPrivateIpAddress $(AgicApplicationGatewayFrontendPrivateIpAddress)
+      -frontendPublicIpResourceId $(AgicApplicationGatewayFrontendPublicIpResourceId)
+      -workspaceId $(LogAWorkspaceId)
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployAGICGateway-$(Build.BuildNumber)'

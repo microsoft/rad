@@ -1,0 +1,101 @@
+trigger: none
+
+#Job Control Variables
+parameters:
+ - name: DeployInfraCore
+   displayName: Deploy Core Infra
+   type: boolean
+   default: false
+
+ - name: DeployInfraRing
+   displayName: Deploy Ring Infra
+   type: boolean
+   default: false
+
+ - name: DeployTelemetry
+   displayName: Deploy Telemetry
+   type: boolean
+   default: false
+
+ - name: DeployAppPlatform
+   displayName: Deploy App Platform
+   type: boolean
+   default: false
+
+ - name: BuildApp
+   displayName: Build Apps
+   type: boolean
+   default: false
+
+ - name: DeployApp
+   displayName: Deploy App
+   type: boolean
+   default: false
+
+ - name: Ring
+   displayName: Target Ring
+   type: string
+   default: Ring0
+   values:
+    - Ring0
+    - Ring1
+    - Ring3
+
+variables:
+  - template: /.ado/Template/Variable/Variables-Core.yml
+
+  - ${{ if eq(parameters.Ring, 'Ring0' )}}:
+    - template: /.ado/Template/Variable/Variables-Ring0.yml
+  - ${{ if eq(parameters.Ring, 'Ring1' )}}:
+    - template: /.ado/Template/Variable/Variables-Ring1.yml
+  - ${{ if eq(parameters.Ring, 'Ring3' )}}:
+    - template: /.ado/Template/Variable/Variables-Ring3.yml
+
+  - template: /.ado/Template/Variable/Variables-Tel-MS.yml
+
+stages:
+
+# STAGE - SAMPLE SHORT
+# - ${{ if eq(parameters.DeployApp, 'true')}}:
+#   - template: /.ado/Template/Stage/CustomStageFile.yml
+#     parameters:
+#       stageName: ""
+#       displayName: ""
+#       environment: "${{variables.parameterRingN}}"
+#       continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+#       stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+#       poolName: "${{variables.DeploymentGroupName}}"    
+#       varList: []
+
+# STAGE - SAMPLE FULL
+# - ${{ if eq(parameters.StageName, 'true')}}:
+  # - template: /.ado/Template/Stage/Stage-v1.yml
+  #   parameters:
+  #     stageName: ""
+  #     displayName: ""
+  #     environment: "${{variables.parameterRingN}}"
+  #     dependsOn: []
+  #     continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+  #     stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+  #     poolName: "${{variables.DeploymentGroupName}}"
+  #     varList: []
+  #     jobList: [
+  #       {
+  #         jobName: "",
+  #         displayName: "",
+  #         jobTemplate: "/.ado/Template/Job/Deployment-v1.yml",
+  #         environment: "${{variables.parameterRingN}}",
+  #         dependsOn: [],
+  #         stepList: [
+  #           {
+  #             template: "/.ado/Template/Step/step0.yml"
+  #           },
+  #           {
+  #             template: "/.ado/Template/Step/step1.yml"
+  #           },
+  #           {
+  #             template: "/.ado/Template/Step/step2.yml"
+  #           }
+  #         ]
+  #       }
+  #     ]

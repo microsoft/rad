@@ -1,0 +1,50 @@
+[
+  {
+    "type": "PowerShell",
+    "name": "PowerShell",
+    "version": "7.2.0",
+    "versionReq": ">="
+  },
+  {
+    "type": "PowerShellModule",
+    "name": "Az",
+    "version": "7.1.0",
+    "versionReq": ">="
+  },
+  {
+    "type": "PowerShellModule",
+    "name": "Az.Accounts",
+    "version": "2.7.5",
+    "versionReq": ">="
+  },
+  {
+    "type": "PowerShellModule",
+    "name": "Az.Compute",
+    "version": "4.22.0",
+    "versionReq": ">="
+  },
+  {
+    "type": "PowerShellModule",
+    "name": "Az.KeyVault",
+    "version": "4.3.1",
+    "versionReq": ">="
+  },
+  {
+    "type": "AzCli",
+    "name": "AzCli",
+    "version": "2.30.0",
+    "versionReq": ">="
+  },
+  {
+    "type": "PowerShellModule",
+    "name": "Az.Network",
+    "version": "4.14.0",
+    "versionReq": ">="
+  },
+  {
+    "type": "PowerShellModule",
+    "name": "Az.Resources",
+    "version": "5.2.0",
+    "versionReq": ">="
+  }
+]

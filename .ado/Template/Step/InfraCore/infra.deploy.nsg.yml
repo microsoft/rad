@@ -1,0 +1,98 @@
+steps:
+
+- task: AzurePowerShell@5
+  name: UpdateHubVnetParameterFile
+  displayName: "Update Hub vNet Parameters File"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
+    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersHub.json'
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzurePowerShell@5
+  name: UpdateSpokeVnetParameterFile
+  displayName: "Update Spoke vNet Parameters File"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
+    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersSpoke.json'
+    azurePowerShellVersion: 'LatestVersion'  
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create HUB Network Security Group'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parameters.json'
+    overrideParameters: >
+      -networkSecurityGroupName $(NetworkSecurityGroupNameHub)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployNetworkSecurityGroups-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create Bastion Network Security Group'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parametersBastion.json'
+    overrideParameters: >
+      -networkSecurityGroupName $(NetworkSecurityGroupNameBastion)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployNetworkSecurityGroups-$(Build.BuildNumber)'    
+    
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create Spoke Network Security Group'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parameters.json'
+    overrideParameters: >
+      -networkSecurityGroupName $(NetworkSecurityGroupNameSpoke)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployNetworkSecurityGroups-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create App Gateway Network Security Group'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parametersAppGw.json'
+    overrideParameters: > 
+      -networkSecurityGroupName $(NetworkSecurityGroupNameAppGw)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployNetworkSecurityGroups-$(Build.BuildNumber)'
+

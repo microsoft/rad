@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vNetName": {
+            "value": "vnet-hub-centralus-01"
+        },
+        "vnetAddressPrefixes": {
+            "value": ["10.0.0.0/20"]
+        },
+        "subnets": {
+            "value": [
+                {
+                    "name": "snet-mgmt-001",
+                    "addressPrefix": "10.0.2.0/24",
+                    "networkSecurityGroupName": "nsg-Hub-[[AppName]]-[[Instance]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        }
+                    ],
+                    "delegations": []
+                },
+                {
+                    "name": "AzureBastionSubnet",
+                    "addressPrefix": "10.0.3.0/24",
+                    "networkSecurityGroupName": "nsg-Bastion-[[AppName]]-[[Instance]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        }
+                    ],
+                    "delegations": []
+                }
+            ]
+        }
+    }
+}

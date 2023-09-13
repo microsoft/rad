@@ -1,0 +1,54 @@
+steps:
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Update KeyVault'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/KeyVault/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/KeyVault/parameters.json'
+    overrideParameters: >
+      -keyVaultName $(KeyVaultName)
+      -enableRbacAuthorization true
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployKeyVault-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create KeyVault2'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/KeyVault/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/KeyVault/parameters.json'
+    overrideParameters: '-keyVaultName $(KeyVaultName2)'
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployKeyVault-$(Build.BuildNumber)'
+
+- task: AzureKeyVault@1
+  displayName: 'Get OID from KeyVault'
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    KeyVaultName: $(keyVaultName)
+    SecretsFilter: objectid
+    RunAsPreJob: false
+
+# TODO APPEARS TO BE A DUPLICATE TO KV ACCESS POLICY IN INFRA.DEPLOY.GWAPSVC.YML
+- task: AzureCLI@2
+  displayName: "Create WebApp KV Access Policy"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'pscore'
+    scriptLocation: 'scriptPath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/New-AccessPolicy.ps1'
+    Arguments: '-keyVaultName $(KeyVaultName2) -objectid $(objectId)'
+    azurePowerShellVersion: 'LatestVersion'

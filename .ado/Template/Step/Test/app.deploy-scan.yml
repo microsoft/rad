@@ -1,0 +1,25 @@
+steps:
+
+- task: PowerShell@2
+  name: PSScriptAnalyzerTests
+  displayName: "Test Scripts against PSScriptAnalyzer"
+  inputs:
+    filePath: '$(Agent.BuildDirectory)/drop/Scripts/tests/Pester-Analyze-PowerShell-Scripts.ps1'
+    workingDirectory: '$(Agent.BuildDirectory)/drop'
+    arguments: '-CI $true'
+
+- task: NodeTool@0
+  displayName: "Install Node on Agent"
+  inputs:
+    versionSpec: '14.x'
+    
+# - task: PowerShell@2
+#   name: NodeApiUnitTest
+#   displayName: "Mocha Unit Tests for Node-API"
+#   inputs:
+#     targetType: 'inline'
+#     workingDirectory: '$(Agent.BuildDirectory)/drop'
+#     script: |
+#       cd ./src/node-api-microservice/src
+#       npm install
+#       npm test

@@ -1,0 +1,69 @@
+name: $(moduleName)
+
+parameters:
+- name: versioningOption
+  displayName: Default publish version
+  type: string
+  default: patch
+  values:
+  - patch
+  - minor
+  - major
+- name: uiCustomVersion
+  displayName: -OR- Custom publish version
+  type: string
+  default: '-'
+- name: removeDeployment
+  displayName: Remove resources post-deployment
+  type: boolean
+  default: true
+
+variables:
+- template: /Modules/ARM/.global/global.variables.yml
+- name: moduleName
+  value: NetworkSecurityGroups
+- name: pipelineCustomVersion
+  value: 1.0.0
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - main
+    - master 
+  paths:
+    include:
+    - Modules/ARM/.global/*
+    - Modules/ARM/NetworkSecurityGroups/*
+    exclude:
+    - Modules/ARM/NetworkSecurityGroups/readme.md
+    
+stages:
+- stage: Validation
+  jobs:
+  - template: /Modules/ARM/.global/PipelineTemplates/pipeline.jobs.validate.yml
+    parameters:
+      deploymentBlocks:
+      - path: $(parametersPath)/parameters.json
+      
+- stage: Deployment
+  jobs:
+  - template: /Modules/ARM/.global/PipelineTemplates/pipeline.jobs.deploy.yml
+    parameters:
+      removeDeployment: '${{ parameters.removeDeployment }}'
+      deploymentBlocks:
+      - path: $(parametersPath)/parameters.json
+
+- stage: Publishing
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main','refs/heads/master'))
+  jobs:
+  - template: /Modules/ARM/.global/PipelineTemplates/pipeline.jobs.publish.yml
+    parameters:
+      versioningOption: '${{ parameters.versioningOption }}'
+      uiCustomVersion: '${{ parameters.uiCustomVersion }}'
+
+- stage: Removal
+  dependsOn: Deployment
+  condition: and(succeededOrFailed(), eq( '${{ parameters.removeDeployment }}', 'true'))
+  jobs:
+  - template: /Modules/ARM/.global/PipelineTemplates/pipeline.jobs.remove.yml

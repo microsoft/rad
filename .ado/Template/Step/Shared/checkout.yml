@@ -1,0 +1,12 @@
+steps:
+- checkout: self
+  path: CNA
+  clean: true
+  fetchDepth: 1
+
+# - task: DownloadBuildArtifacts@0
+#   inputs:
+#     buildType: 'current'
+#     downloadType: 'single'
+#     artifactName: 'drop'
+#     downloadPath: '$(Agent.BuildDirectory)'  

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "keyVaultName": {
+     "value": "cloud-native-app"
+    },
+    "keysObject": {
+      "value": {
+        "keys": [
+          {
+            "keyName": "keyRSA",
+            "keyType": "RSA",
+            "keyOps": [
+              "encrypt",
+              "decrypt",
+              "sign",
+              "verify",
+              "wrapKey",
+              "unwrapKey"
+            ],
+            "keySize": "2048",
+            "curveName": ""
+          }
+        ]
+      }
+    },
+     "enableSoftDelete": {
+       "value": true
+     },
+     "softDeleteRetentionInDays": {
+       "value": 7
+     },
+//     "networkAcls": {
+//       "value": {
+//         "bypass": "AzureServices",
+//         "defaultAction": "Deny",
+//         "virtualNetworkRules": [],
+//         "ipRules": []
+//       }
+//     },
+     "enableRbacAuthorization": {
+       "value": false
+     }
+//     "roleAssignments": {
+//       "value": [
+//         {
+//           "roleDefinitionIdOrName": "Key Vault Administrator (preview)",
+//           "principalIds": [
+//             "22f3a3a0-67b9-46b1-b708-f22ae2cd4859"
+//           ]
+//         }
+//       ]
+//     }
+  }
+}

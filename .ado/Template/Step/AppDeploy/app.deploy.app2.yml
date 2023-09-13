@@ -1,0 +1,37 @@
+steps:
+- checkout: self
+  path: CNA
+  clean: true
+  fetchDepth: 1
+
+# - task: PowerShell@2
+#   name: UpdateAppConfig
+#   displayName: Update Kube Config and App Service Deployment Files
+#   inputs:
+#     filePath: 'Scripts/Update-TemplateText.ps1'
+#     arguments: >
+#       -FileList @(
+#         "src\docker-compose-votingapp.yml", 
+#         "src\azure-vote-all-in-one-redis.yaml", 
+#         "src\node-api-deploy.yml",
+#         "src\node-api-microservice\src\docker-compose-node-api-app-service.yml",
+#         "src\tel-ms-deploy.yml"
+#       ) 
+#       -ReplacementList @{
+#         "[[ACRLoginServer]]" = "$(ACRName).azurecr.io"; 
+#         "[[IngressCertName]]" = "$(AksIngressCertSecretName)"
+#       }
+
+# - task: AzureWebAppContainer@1
+#   displayName: 'Deploy Node App'
+#   inputs:
+#     azureSubscription: '$(TargetSubscriptionConnection)'
+#     appName: $(WebAppName)-node
+#     multicontainerConfigFile: "$(System.DefaultWorkingDirectory)/src/node-api-microservice/src/docker-compose-node-api-app-service.yml"
+
+# - task: AzureWebAppContainer@1
+#   displayName: 'Deploy Voting App'
+#   inputs:
+#     azureSubscription: '$(TargetSubscriptionConnection)'
+#     appName: $(WebAppName)
+#     multicontainerConfigFile: "$(System.DefaultWorkingDirectory)/src/docker-compose-votingapp.yml"

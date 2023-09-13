@@ -1,0 +1,110 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmssName": {
+            "value": "ado-scaleset"
+        },
+        "vmNamePrefix": {
+            "value": "ado"
+        },
+        "instanceSize": {
+            "value": "Standard_D2_v3"
+        },
+        "instanceCount": {
+            "value": "0"
+        },
+        "upgradePolicyMode": {
+            "value": "Manual"
+        },
+        "vmPriority": {
+            "value": "Regular"
+        },
+        "osDisk": {
+            "value": {
+                "createOption": "fromImage",
+                "diskSizeGB": "128",
+                "managedDisk": {
+                    "storageAccountType": "StandardSSD_LRS"
+                }
+            }
+        },
+        "availabilityZones": {
+            "value": [
+                "2"
+            ]
+        },
+        "scaleSetFaultDomain": {
+            "value": 1
+        },
+        "managedIdentityType": {
+            "value": "SystemAssigned"   
+        },
+        "enableLinuxMMAAgent": {
+            "value": false
+        },
+        "osType": {
+            "value": "Linux"
+        },
+        "imageReference": {
+            "value": {
+                "publisher": "Canonical",
+                "offer": "UbuntuServer",
+                "sku": "18.04-LTS",
+                "version": "latest"
+            }
+        },
+        "adminUsername": {
+            "value": "scaleSetAdmin"
+        },
+        "disablePasswordAuthentication": {
+            "value": false
+        },
+        "nicConfigurations": {
+            "value": [
+                {
+                    "nicSuffix": "-nic01",
+                    "ipConfigurations": [
+                        {
+                            "name": "ipconfig1",
+                            "properties": {
+                                "subnet": {
+                                    "id": "subscriptions/[[SubscriptionId]]/resourceGroups/[[TargetResourceGroupCore]]/providers/Microsoft.Network/virtualNetworks/[[SpokeVnetName]]/subnets/snet-ado-001"
+                                }                             
+                            }                           
+                        }
+                    ]
+                }
+            ]
+        },
+        "linuxScriptExtensionFileData": {
+            "value": [
+                {
+                    "uri": "https://[[StorageAccountName]].privatelink.blob.core.windows.net/ado/ConfigureAdo.sh",
+                    "storageAccountId": "/subscriptions/[[SubscriptionId]]/resourceGroups/[[TargetResourceGroupCore]]/providers/Microsoft.Storage/storageAccounts/[[StorageAccountName]]"
+                }
+            ]
+        },
+        "linuxBase64Script":{
+            "value": ""
+        },
+        "deploymentGroup":{
+            "value": ""
+        },
+        "vSTSAccountName":{
+            "value": ""
+        },
+        "teamProject":{
+            "value": ""
+        },
+        "agentName":{
+            "value": ""
+        },        
+        "pATToken":{
+            "value": ""
+        },
+        "singlePlacementGroup":{
+            "value": false
+        }
+    }
+}

@@ -1,0 +1,131 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vNetName": {
+            "value": "vnet-spoke-centralus-01"
+        },
+        "vnetAddressPrefixes": {
+            "value": ["10.0.16.0/20"]
+        },
+        "subnets": {
+            "value": [{
+                    "name": "snet-webtier-001",
+                    "addressPrefix": "10.0.16.0/24",
+                    "networkSecurityGroupName": "nsg-Spoke-[[AppName]]-[[InstanceNumber]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        },
+                        {
+                            "service": "Microsoft.ContainerRegistry"
+                        }
+                    ],
+                    "delegations": [
+                        {
+                            "name": "Microsoft.Web.serverFarms",
+                            "properties": {
+                                "serviceName": "Microsoft.Web/serverFarms"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "snet-privep-001",
+                    "addressPrefix": "10.0.17.0/24",
+                    "networkSecurityGroupName": "nsg-Spoke-[[AppName]]-[[InstanceNumber]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        }
+                    ],
+                    "delegations": []
+                },
+                {
+                    "name": "snet-aks-001",
+                    "addressPrefix": "10.0.18.0/24",
+                    "networkSecurityGroupName": "nsg-Spoke-[[AppName]]-[[InstanceNumber]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        }
+                    ],
+                    "delegations": []
+                },
+                {
+                    "name": "snet-api-001",
+                    "addressPrefix": "10.0.19.0/24",
+                    "networkSecurityGroupName": "nsg-Spoke-[[AppName]]-[[InstanceNumber]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        }
+                    ],
+                    "delegations": []
+                },
+                {
+                    "name": "snet-ado-001",
+                    "addressPrefix": "10.0.20.0/24",
+                    "networkSecurityGroupName": "nsg-Spoke-[[AppName]]-[[InstanceNumber]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        }
+                    ],
+                    "delegations": []
+                },
+                {
+                    "name": "snet-appgw-001",
+                    "addressPrefix": "10.0.21.0/24",
+                    "networkSecurityGroupName": "nsg-AppGw-[[AppName]]-[[InstanceNumber]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        }
+                    ],
+                    "delegations": []
+                },
+                {
+                    "name": "snet-apim-001",
+                    "addressPrefix": "10.0.22.0/24",
+                    "networkSecurityGroupName": "nsg-Spoke-[[AppName]]-[[InstanceNumber]]",
+                    "routeTableName": "",
+                    "serviceEndpoints": [
+                        {
+                            "service": "Microsoft.Storage"
+                        },
+                        {
+                            "service": "Microsoft.KeyVault"
+                        }
+                    ],
+                    "delegations": []
+                }
+            ]
+        }
+    }
+}
+

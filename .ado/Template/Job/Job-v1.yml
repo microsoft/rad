@@ -1,0 +1,30 @@
+parameters:
+  jobName: ""
+  displayName: ""
+  poolName: ""
+  dependsOn: []
+  varList: []
+  stepList: []
+  continueJobsOnError: false
+  stageCoreTimeout: 0
+  condition: "true"
+
+jobs:
+  - job: ${{ parameters.jobName }}
+    displayName: ${{ parameters.displayName }}
+    condition: ${{parameters.condition}}
+    dependsOn: 
+      - ${{ each item in parameters.dependsOn }}:
+        - ${{ item.Name }}
+    continueOnError: ${{parameters.continueJobsOnError}}
+    timeoutInMinutes: ${{parameters.stageCoreTimeout}}
+    variables:
+      - ${{ each item in parameters.varList }}:
+        - template: ${{ item.Name }}
+    pool:
+        name: ${{parameters.poolName}}
+    steps:
+      - ${{ each item in parameters.stepList }}:
+        - template: ${{item.template}}
+          parameters:
+            deploymentMode: 'Incremental'

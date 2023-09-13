@@ -1,0 +1,5 @@
+steps:
+- checkout: self
+  path: CNA
+  clean: true
+  fetchDepth: 1

@@ -1,0 +1,20 @@
+steps:
+- checkout: git://ADO-Boot-Slim/ADO-Boot-Slim
+  clean: true
+  fetchDepth: 1
+
+- checkout: git://ADO-Boot-Slim/TestRepo
+  clean: true
+  fetchDepth: 1
+
+- task: CopyFiles@2
+  displayName: 'Copy Repo Source to Artifact Staging'
+  inputs:
+    SourceFolder: '$(Agent.BuildDirectory)'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    Content: '**'
+    CleanTargetFolder: true
+    OverWrite: true
+  
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish build artifacts'   

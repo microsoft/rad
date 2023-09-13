@@ -1,0 +1,129 @@
+parameters:
+  stageName: ""
+  displayName: ""
+  varList: []
+  environment: ""
+  poolName: ""
+  continueJobsOnError: false
+  stageCoreTimeout: 0
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: '${{ parameters.displayName }}'
+    variables:
+      - ${{ each item in parameters.varList }}:
+        - template: ${{ item.Name }}
+    jobs:
+      - template: /.ado/Template/Job/Deployment-v1.yml
+        parameters:
+          jobName: "DeployRingInfra_0"
+          displayName: "Deploy_RingInfra_0"
+          condition: true
+          environment: ${{parameters.environment}}
+          continueOnError: ${{parameters.continueJobsOnError}}
+          timeoutInMinutes: ${{parameters.stageCoreTimeout}}
+          dependsOn: []
+          poolName: ${{parameters.poolName}}
+          varList: ${{parameters.varList}}
+          stepList: [
+            {
+              template: "/.ado/Template/Step/Shared/sample.yml"
+            }
+          ]
+
+      - template: /.ado/Template/Job/Deployment-v1.yml
+        parameters:
+          jobName: "DeployRingInfra_1"
+          displayName: "Deploy_RingInfra_1"
+          condition: succeeded()
+          environment: ${{parameters.environment}}
+          continueOnError: ${{parameters.continueJobsOnError}}
+          timeoutInMinutes: ${{parameters.stageCoreTimeout}}
+          dependsOn: [
+            {
+              Name: "DeployRingInfra_0"
+            }            
+          ]
+          poolName: ${{parameters.poolName}}
+          varList: ${{parameters.varList}}
+          # ${{ if ne(variables.DeployAPIM, 'true') }}:
+          #   stepList: []
+          # ${{ if eq(variables.DeployAPIM, 'true')}}: 
+          #   stepList: []  
+          stepList: [
+            {
+              template: "/.ado/Template/Step/Shared/sample.yml"
+            }            
+          ]    
+
+      - template: /.ado/Template/Job/Deployment-v1.yml
+        parameters:
+          jobName: "DeployRingInfra_2"
+          displayName: "Deploy_RingInfra_2"
+          condition: succeeded()       
+          environment: ${{parameters.environment}}
+          continueOnError: ${{parameters.continueJobsOnError}}
+          timeoutInMinutes: ${{parameters.stageCoreTimeout}}
+          dependsOn: [
+            {
+              Name: "DeployRingInfra_1"
+            }            
+          ]
+          poolName: ${{parameters.poolName}}
+          varList: ${{parameters.varList}}
+          stepList: [
+            {
+              template: "/.ado/Template/Step/Shared/sample.yml"
+            }            
+          ]
+
+      - template: /.ado/Template/Job/Deployment-v1.yml
+        parameters:
+          jobName: "DeployRingInfra_3"
+          displayName: "Deploy_RingInfra_3"
+          condition: succeeded()
+          environment: ${{parameters.environment}}
+          continueOnError: ${{parameters.continueJobsOnError}}
+          timeoutInMinutes: ${{parameters.stageCoreTimeout}}
+          dependsOn: [
+            {
+              Name: "DeployRingInfra_2"
+            }    
+          ]
+          poolName: ${{parameters.poolName}}
+          varList: ${{parameters.varList}}
+          stepList: [
+            {
+              template: "/.ado/Template/Step/Shared/sample.yml"
+            }            
+          ]
+
+      - template: /.ado/Template/Job/Deployment-v1.yml
+        parameters:
+          jobName: "DeployRingInfra_4"
+          displayName: "Deploy_RingInfra_4"
+          condition: succeeded()
+          environment: ${{parameters.environment}}
+          continueOnError: ${{parameters.continueJobsOnError}}
+          timeoutInMinutes: ${{parameters.stageCoreTimeout}}
+          dependsOn: [
+            {
+              Name: "DeployRingInfra_0"
+            },
+            {
+              Name: "DeployRingInfra_1"
+            },
+            {
+              Name: "DeployRingInfra_2"
+            },
+            {
+              Name: "DeployRingInfra_3"
+            }               
+          ]
+          poolName: ${{parameters.poolName}}
+          varList: ${{parameters.varList}}
+          stepList: [
+            {
+              template: "/.ado/Template/Step/Shared/sample.yml"
+            }            
+          ]

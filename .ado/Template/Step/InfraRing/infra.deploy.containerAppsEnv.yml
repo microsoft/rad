@@ -1,0 +1,83 @@
+steps:
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create Azure Container Apps Environment'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/ContainerApps/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/ContainerApps/parameters.json'
+    overrideParameters: >
+      -environmentName $(ACAEnvName)
+      -logAnalyticsWorkspaceName $(LogAnalyticsWorkspaceName)
+      -runtimeSubnetId $(ACARuntimeVnetId)
+      -infrastructureSubnetId $(ACAInfraVnetId)
+      -location $(TargetRegion)
+      -appInsightsName $(AppInsightsName)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployAzureContainerAppsEnv-$(Build.BuildNumber)'
+
+- task: AzureCLI@2
+  name: GetAcaEnvAttributes4DNS
+  displayName: Get Aca Env Attributed for DN Config
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'pscore'
+    scriptLocation: 'scriptPath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Get-AzureContAppDetail.ps1'
+    Arguments: '-ContainerAppsEnvName $(ACAEnvName) -ContainerAppsEnvRgName $(TargetResourceGroupCore)'
+
+- task: AzurePowerShell@5
+  name: UpdateDNSParameterFile_STOR
+  displayName: "Update Private DNS Zones Parameters File"
+  condition: ne(variables['AcaZoneName'], '')
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
+    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Deploy ACA Private DNS Zone'
+  condition: ne(variables['AcaZoneName'], '')
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateDnsZones/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
+    overrideParameters: >
+      -privateDnsZoneName $(AcaZoneName)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployBlobPrivateDnsZone-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Deploy A Record for ACA Private DNS Zone'
+  condition: ne(variables['AcaZoneName'], '')
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateDnsZones/A/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/A/parameters.json'
+    overrideParameters: >     
+      -zoneName $(AcaZoneName)
+      -arecordIpAddress $(AcaARecordIp)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployBlobPrivateDnsZone-$(Build.BuildNumber)'

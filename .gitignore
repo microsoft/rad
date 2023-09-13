@@ -1,0 +1,13 @@
+# AKS cert yaml created by New-AksTlsSecretYml.ps1
+cert.yml
+
+# ignore certs
+*.crt
+*.key
+*.pfx
+.vs/
+
+*.rnd
+*.cer
+
+.vscode/

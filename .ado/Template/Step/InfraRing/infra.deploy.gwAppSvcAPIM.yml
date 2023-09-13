@@ -1,0 +1,152 @@
+steps:
+
+- task: AzurePowerShell@5
+  displayName: "Create Base64 Cert for WebApp"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/New-AgCert.ps1'
+    workingDirectory: '$(Agent.BuildDirectory)/drop'
+    ScriptArguments: '-CertDNSName $(CertDNSName) -KeyVaultName $(KeyVaultName2) -SecretName $(SecretName) -SecretPwdName $(SecretPwdName) -Subject $(AgicCertSubject)'
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzurePowerShell@5
+  name: UpdateAppGWParameterFile_WebApp
+  displayName: "Update App Gateway Parameters File"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
+    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/ApplicationGateway/parametersRingNAPIM.json -KvVersionKey $(KvVersionKey)'
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create WebApp Gateway Managed Identity'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/UserAssignedIdentities/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/UserAssignedIdentities/parameters.json'
+    overrideParameters: >
+      -userMsiName $(userMsiName)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployWebAppGwManagedIdentity-$(Build.BuildNumber)'
+
+- task: AzurePowerShell@5
+  name: UpdateRBACAccessPolicyParameterFile_WebApp
+  displayName: "Update Access Policy RBAC Parameters File"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
+    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/AcessPolicies/parametersRBAC.json'
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create WebApp KV RBAC'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/AccessPolicies/deployRBAC.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/AccessPolicies/parametersRBAC.json'
+    overrideParameters: '-keyVaultName $(KeyVaultName2) -managedIdentityName $(userMsiName)'
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployKVAccessPolicy-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create WebApp KV2 Access Policy'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/AccessPolicies/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/AccessPolicies/parameters.json'
+    overrideParameters: '-keyVaultName $(KeyVaultName2) -principalId $(userMsiName) -tenantId $(TenantId)'
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployKVAccessPolicy-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create WebApp App Gateway Public IP'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PublicIPAddresses/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PublicIPAddresses/parameters.json'
+    overrideParameters: >
+      -publicIPAddressesName $(WebAppPublicIPAddressesName)
+      -workspaceId $(LogAWorkspaceId)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployWebAppGwPublicIp-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create App Gateway Network Security Group'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parametersAppGw.json'
+    overrideParameters: >
+      -networkSecurityGroupName $(NetworkSecurityGroupNameAppGw)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployNetworkSecurityGroups-$(Build.BuildNumber)'
+ 
+- task: AzurePowerShell@5
+  displayName: "Set App Gateway Subnet NSG"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Set-NSG.ps1'
+    workingDirectory: '$(Agent.BuildDirectory)/drop'    
+    ScriptArguments: '-ResourceGroupName $(TargetResourceGroupCore) -virtualNetworkName $(SpokeVnetName) -subNetName snet-appgw-001 -nsgName $(NetworkSecurityGroupNameAppGw)'    
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Create WebApp App Gateway'
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/ApplicationGateway/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/ApplicationGateway/parametersRingNAPIM.json'
+    overrideParameters: >
+      -applicationGatewayName $(webAppApplicationGatewayName) 
+      -vNetName $(SpokeVnetName) 
+      -subnetName $(WebAppApplicationGatewaySubnetName) 
+      -vNetResourceGroup $(TargetResourceGroupCore) 
+      -frontendPrivateIpAddress $(WebAppApplicationGatewayFrontendPrivateIpAddress) 
+      -frontendPublicIpResourceId $(WebAppApplicationGatewayFrontendPublicIpResourceId)
+      -workspaceId $(LogAWorkspaceId)
+      -cuaId $(cuaId)
+    deploymentMode: 'Incremental'
+    deploymentName: 'deployWebAppAppGw-$(Build.BuildNumber)'

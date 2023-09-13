@@ -1,0 +1,73 @@
+steps:
+- task: AzurePowerShell@5
+  name: UpdateDNSParameterFile_CR
+  displayName: "Update Private DNS Zones Parameters File"
+  inputs:
+    azureSubscription: '$(TargetSubscriptionConnection)'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
+    workingDirectory: '$(Agent.BuildDirectory)/drop'
+    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate Azure Container Registry Private DNS Zone Deployment'
+  condition: or(eq(variables['DeploymentType'], 'WebApp'), eq(variables['DeploymentType'], 'Both'))
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateDnsZones/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
+    overrideParameters: >
+      -privateDnsZoneName $(ACRPrivateDnsZoneName)
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployAcrPrivateDnsZones-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate Azure Container Registry Deployment'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/ContainerRegistry/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/ContainerRegistry/parameters.json'
+    overrideParameters: >
+      -acrName $(ACRName)
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployAzureContainerRegistry-$(Build.BuildNumber)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Validate Azure Container Registry Private Endpoints Deployment'
+  enabled: true
+  inputs:
+    deploymentScope: 'Resource Group'
+    dependsOn: 'Deploy Azure Container Registry Private DNS Zone'
+    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
+    subscriptionId: '$(SubscriptionId)'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(TargetResourceGroupCore)'
+    location: '$(TargetRegion)'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateEndpoints/deploy.json'
+    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateEndpoints/parameters.json'
+    overrideParameters: >
+      -privateEndpointName $(ACRPrivateEndPointName)
+      -targetSubnetId $(PrivateEndpointTargetSubnetId)
+      -privateDNSId $(ACRPrivateEndpointPrivateDNSId)
+      -serviceResourceId $(ACRPrivateEndpointServiceResourceId)
+      -groupId ["registry"]
+      -cuaId $(cuaId)
+    deploymentMode: 'Validation'
+    deploymentName: 'deployContainerRegistoryPrivateEndpoints-$(Build.BuildNumber)'

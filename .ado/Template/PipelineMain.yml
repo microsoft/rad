@@ -1,0 +1,152 @@
+trigger: none
+
+#Job Control Variables
+parameters:
+ - name: DeployInfraCore
+   displayName: Deploy Core Infra
+   type: boolean
+   default: false
+
+ - name: DeployInfraRing
+   displayName: Deploy Ring Infra
+   type: boolean
+   default: false
+
+ - name: DeployAppPlatform
+   displayName: Deploy App Platform
+   type: boolean
+   default: false
+
+ - name: BuildApp
+   displayName: Build Apps
+   type: boolean
+   default: false
+
+ - name: DeployApp
+   displayName: Deploy Apps
+   type: boolean
+   default: false
+
+ - name: Ring
+   displayName: Target Ring
+   type: string
+   default: ring0
+   values:
+    - ring0
+    - ring1
+    - ring2
+    - ring3
+
+variables:
+  - template: /.ado/Template/Variable/Variables-Core.yml
+
+  - ${{ if eq(parameters.Ring, 'ring0' )}}:
+    - template: /.ado/Template/Variable/Variables-ring0.yml
+  - ${{ if eq(parameters.Ring, 'ring1' )}}:
+    - template: /.ado/Template/Variable/Variables-ring1.yml
+  - ${{ if eq(parameters.Ring, 'ring2' )}}:
+    - template: /.ado/Template/Variable/Variables-ring2.yml    
+  - ${{ if eq(parameters.Ring, 'ring3' )}}:
+    - template: /.ado/Template/Variable/Variables-ring3.yml
+
+stages:
+
+# STAGE - CREATE ARTIFACTS
+- template: /.ado/Template/Stage/PublishArtifacts.yml
+  parameters:
+    stageName: "PublishArtifacts"
+    displayName: "Publish Artifacts"
+    environment: "${{variables.Env}}"
+    continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+    stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+    poolName: "${{variables.DeploymentGroupName}}"
+    varList: [
+      {
+        name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+      }
+    ]
+
+# STAGE - CORE INFRA DEPLOYMENT
+- ${{ if eq(parameters.DeployInfraCore, 'true') }}:
+  - template: /.ado/Template/Stage/DeployInfraCore.yml
+    parameters:
+      stageName: "DeployInfraCore"
+      displayName: "Deploy_Infra_Core"
+      condition: succeeded()
+      environment: "${{variables.Env}}"
+      continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+      stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+      poolName: "${{variables.DeploymentGroupName}}"
+      varList: [
+        {
+          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+        }
+      ]
+
+# STAGE - RING INFRA DEPLOYMENT
+- ${{ if eq(parameters.DeployInfraRing, 'true') }}:
+  - template: /.ado/Template/Stage/DeployInfraRing.yml
+    parameters:
+      stageName: "DeployInfraRing"
+      displayName: "Deploy Infra Ring"
+      condition: succeeded()
+      environment: "${{variables.Env}}"
+      continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+      stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+      poolName: "${{variables.DeploymentGroupName}}"
+      varList: [
+        {
+          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+        }
+      ]
+
+# STAGE - APP PLATFORM DEPLOYMENT
+- ${{ if eq(parameters.DeployAppPlatform, 'true')}}:        
+  - template: /.ado/Template/Stage/DeployAppPlatform.yml
+    parameters:
+      stageName: "DeployPlatform"
+      displayName: "Deploy App Platform"
+      condition: succeeded()
+      environment: "${{variables.Env}}"
+      continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+      stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+      poolName: "${{variables.DeploymentGroupName}}"
+      varList: [
+        {
+          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+        }
+      ]
+
+# STAGE - APP BUILD 
+- ${{ if eq(parameters.BuildApp, 'true') }}:
+  - template: /.ado/Template/Stage/BuildApp.yml
+    parameters:
+      stageName: "BuildApp"
+      displayName: "Build Apps"
+      condition: succeeded()
+      environment: "${{variables.Env}}"
+      continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+      stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+      poolName: "${{variables.DeploymentGroupName}}"
+      varList: [
+        {
+          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+        }
+      ]
+
+# STAGE - DEPLOY APP
+- ${{ if eq(parameters.DeployApp, 'true')}}:
+  - template: /.ado/Template/Stage/DeployAppRing.yml
+    parameters:
+      stageName: "DeployApp"
+      displayName: "Deploy Apps"
+      condition: succeeded()
+      environment: "${{variables.Env}}"
+      continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+      stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+      poolName: "${{variables.DeploymentGroupName}}"    
+      varList: [
+        {
+          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+        }
+      ]

@@ -1,1 +1,0 @@
-The GitHub version of BURP is in development and will be released soon.

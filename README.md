@@ -1,23 +1,27 @@
 # Build Update Release Pipeline (BURP)
 
-## Contributing
+# Business Problem
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+Big Bang releases are hard to develop, test, verify, and operate. Established DevOps principles indicate that teams should work in small batches and deploy as frequently as possible. Slow, manual release processes result in fewer deployments, which lead to even more troublesome deployments. Manual releases can introduce a plethora of problems. It is simply a realistic notion that we, as human beings, can't complete the same task 100 times and do it the same way each time. Combining the work of multiple developers is also a challenge. Software systems are complex, and an apparently simple, self-contained change to a single file can easily have unintended consequences which compromise the correctness of the system. 
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+# Business Value
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+Continuous integration and continuous deployment (CI/CD) pipelines are a practice focused on improving software delivery throughout the software development life cycle via automation. By automating CI/CD through development, testing, production, and monitoring phases of the software development lifecycle, organizations can develop higher quality code, faster. Although it’s possible to manually execute each of the steps of a CI/CD pipeline, the true value of CI/CD pipelines is realized through automation.
+- Accelerated Delivery: Drive business value inherent in new software releases to customers more quickly. 
+- Improved productivity and efficiency: Significant time savings for developers, testers, operations engineers, etc. through automation.
+- Reliable releases: With more frequent releases, the number of code changes in each release decreases. This makes finding and fixing any problems that do occur easier, reducing the time in which they have an impact.
 
-## Trademarks
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+# Asset Description 
+
+## try this
+
+This pipeline design is a highly flexible templated and componentized framework that has become a foundation of Microsoft enterprise solutions development. Leverage this release automation approach to drive work consistency and enable comprehensive, high-quality accelerated releases for complex development engagements. 
+
+Asset Details (Jim)
+Nested strategy approach
+The standard reference pipeline is ---
+Stage files
+Within state files jobs
+Within Jobs include collections of tasks…
+

@@ -23,5 +23,4 @@ Nested strategy approach
 The standard reference pipeline is ---
 Stage files
 Within state files jobs
-Within Jobs include collections of tasks…
-
+Within Jobs include collections of tasks….

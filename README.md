@@ -1,4 +1,4 @@
-# Build Update Release Pipeline (BURP)
+# Release Automation & Development [RAD]
 
 # Business Problem
 

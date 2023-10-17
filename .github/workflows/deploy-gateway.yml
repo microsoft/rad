@@ -1,0 +1,79 @@
+name: Deploy Application Gateway
+
+on:
+  workflow_call:
+    inputs:
+      target-ring:
+        required: true
+        type: string 
+      variables:
+        required: true
+        type: string
+      deploy-telemetry:
+        required: true
+        type: string           
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  Deploy-Gateway:
+    name: Deploy Application Gateway
+    runs-on: ${{fromJSON(inputs.variables).RunnerLabel }}
+    steps:
+      # LOGIN AZ POWERSHELL
+      - uses: azure/login@v1
+        with:
+          creds: '{"clientId":"${{fromJSON(inputs.variables).RunnerServicePrincipalId }}","clientSecret":"${{ secrets.AZURE_CREDENTIALS }}","subscriptionId":"${{fromJSON(inputs.variables).SubscriptionId }}","tenantId":"${{fromJSON(inputs.variables).TenantId }}"}'
+          # client-id: ${{fromJSON(inputs.variables).RunnerServicePrincipalId }}
+          # tenant-id: ${{fromJSON(inputs.variables).TenantId }}
+          # subscription-id: ${{fromJSON(inputs.variables).SubscriptionId }}
+          enable-AzPSSession: true
+      # LOGIN AZ CLI
+      - uses: azure/login@v1
+        with:
+          creds: '{"clientId":"${{fromJSON(inputs.variables).RunnerServicePrincipalId }}","clientSecret":"${{ secrets.AZURE_CREDENTIALS }}","subscriptionId":"${{fromJSON(inputs.variables).SubscriptionId }}","tenantId":"${{fromJSON(inputs.variables).TenantId }}"}'
+          # client-id: ${{fromJSON(inputs.variables).RunnerServicePrincipalId }}
+          # tenant-id: ${{fromJSON(inputs.variables).TenantId }}
+          # subscription-id: ${{fromJSON(inputs.variables).SubscriptionId }}
+
+      - uses: actions/checkout@v2
+        name: Checkout Repo
+      
+      # DEPLOY APP GATEWAY FOR AKS
+      - uses: ./.github/actions/Gateway/gateway.deploy.aks
+        if: fromJSON(inputs.variables).DeploymentType == 'AKS' && fromJSON(inputs.variables).DeployAPIM != 'true' && fromJSON(inputs.variables).DeployTelemetryMicroservice != 'true'
+        with:
+          variables: ${{ inputs.variables }}
+          target-ring: ${{ inputs.target-ring }}
+
+      # DEPLOY APP GATEWAY FOR AKS + TELEMETRY
+      - uses: ./.github/actions/Gateway/gateway.deploy.gwAksTelms
+        if: fromJSON(inputs.variables).DeploymentType == 'AKS' && fromJSON(inputs.variables).DeployAPIM != 'true' && fromJSON(inputs.variables).DeployTelemetryMicroservice == 'true'
+        with:
+          variables: ${{ inputs.variables }}
+          target-ring: ${{ inputs.target-ring }}
+
+      # # DEPLOY APP GATEWAY FOR AKS + APIM
+      - uses: ./.github/actions/Gateway/gateway.deploy.gwAksAPIM
+        if: fromJSON(inputs.variables).DeploymentType == 'AKS' && fromJSON(inputs.variables).DeployAPIM == 'true' && fromJSON(inputs.variables).DeployTelemetryMicroservice != 'true'
+        with:
+          variables: ${{ inputs.variables }}
+          target-ring: ${{ inputs.target-ring }}
+          paramFile: 'parametersAksAPIM.json'        
+
+      # # DEPLOY APP GATEWAY FOR AKS + APIM + TELEMETRY
+      # TODO NOT CURRENTLY DEFINED IN ADO TEMPLATE
+      # - uses: ./.github/actions/Gateway/gateway.deploy.aks
+      #   if: fromJSON(inputs.variables).DeploymentType == 'AKS' && fromJSON(inputs.variables).DeployAPIM == 'true' && inputs.deploy-telemetry == 'true'
+      #   with:
+      #     variables: ${{ inputs.variables }}
+      #     target-ring: ${{ inputs.target-ring }}   
+
+      # # DEPLOY APP GATEWAY FOR ALL + APIM + TELEMETRY
+      # - uses: ./.github/actions/Gateway/gateway.deploy.aks
+      #   if: (fromJSON(inputs.variables).DeploymentType == 'AKS' || fromJSON(inputs.variables).DeploymentType == 'All') && fromJSON(inputs.variables).DeployAPIM == 'true'
+      #   with:
+      #     variables: ${{ inputs.variables }}
+      #     target-ring: ${{ inputs.target-ring }}   

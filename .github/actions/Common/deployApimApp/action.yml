@@ -1,0 +1,95 @@
+name: "deployApimApp"
+description: "Deploy App to APIM"
+inputs:
+  product-name:
+    description: "Name of the APIM product being published"
+    required: true
+  template-file:
+    description: "ARM template file"
+    required: true    
+  parameter-file:
+    description: "ARM parameter file"
+    required: true
+  region:
+    description: ""
+    required: true      
+  resource-group:
+    description: "Target Resource Group"
+    required: true    
+  appConfigurationName:
+    description: "Azure App Configuration service name"
+    required: true
+  certName:
+    description: ""
+    required: true
+  apimUrl:
+    description: ""
+    required: true
+  suffix:
+    description: ""
+    required: true  
+  authCert:
+    description: ""
+    required: true
+  apimServiceName:
+    description: ""
+    required: true
+runs:
+  using: "composite"
+  steps:
+
+    - name: Update Template Files
+      shell: pwsh
+      working-directory: ${{ github.workspace }}
+      run: |
+        $configString = ${{ github.workspace }}/Scripts/Get-AppConfigurationConnectionString.ps1 -AppConfigurationName ${{ fromJSON(inputs.variables).AACName }} -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }}    
+        $fileList = @("${{inputs.parameter-file}}")
+
+        $replacementList = @{
+          "[[DncCertName]]" = "${{ inputs.certName }}"
+          "[[DncApiApimUrl]]" = "${{ inputs.apimUrl }}"
+          "[[Suffix]]" = "${{ inputs.suffix }}"
+          "[[AuthCert]]" = "${{ inputs.authCert }}"
+        }
+
+        ${{ github.workspace }}/Scripts/Update-TemplateText.ps1 -FileList $fileList -ReplacementList $replacementList
+
+    # - name: Update DncApp.Api APIM Parameters with APIM Service Name
+    #   shell: pwsh
+    #   run: >
+    #     ${{ github.workspace }}/Scripts/Update-ApimParameter.ps1 `
+    #       -VariablesFile ${{ github.workspace }}/.github/Variables/Variables-${{ fromJSON(inputs.variables).parameterRingN }}.env `
+    #       -ParametersFile ${{ github.workspace }}/${{ fromJSON(inputs.variables).parametersPath }}/APIManagement/APIs/DncAks/apim-parameters.json
+
+    - name: Create APIM Product ${{ inputs.product-name }}
+      uses: azure/arm-deploy@v1
+      with:
+        scope: resourcegroup
+        region: ${{ inputs.region }}
+        resourceGroupName: ${{inputs.resource-group }}
+        template: ${{ github.workspace }}/${{ inputs.template-file }}
+        parameters: ${{ github.workspace }}/${{ inputs.parameter-file }} ApimServiceName=${{ inputs.apimServiceName }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployApimProduct-${{ inputs.product-name }}-${{ github.run_id }}
+
+    - name: Create ${{ inputs.product-name }} APIM API
+      uses: azure/arm-deploy@v1
+      with:
+        scope: resourcegroup
+        region: ${{ inputs.region }}
+        resourceGroupName: ${{inputs.resource-group }}
+        template: ${{ github.workspace }}/${{ fromJSON(inputs.variables).parametersPath }}/APIManagement/APIs/DncAks/Dnc-API-Microservice.api.template.json
+        parameters: ${{ github.workspace }}/${{ fromJSON(inputs.variables).parametersPath }}/APIManagement/APIs/DncAks/apim-parameters.json ApimServiceName=${{ fromJSON(inputs.variables).ApiManagementServiceName }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployDncAppApi-${{ github.run_id }}
+
+    - name: Associate DncApp.Api APIM APIs to APIM Product
+      uses: azure/arm-deploy@v1
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/${{ fromJSON(inputs.variables).parametersPath }}/APIManagement/APIs/DncAks/apim-productAPIs.template.json
+        parameters: ${{ github.workspace }}/${{ fromJSON(inputs.variables).parametersPath }}/APIManagement/APIs/DncAks/apim-parameters.json ApimServiceName=${{ fromJSON(inputs.variables).ApiManagementServiceName }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployAssociateDnc2Api-${{ github.run_id }}

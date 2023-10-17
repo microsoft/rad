@@ -1,0 +1,76 @@
+name: "platform.deploy.telemetry-ms"
+description: "Deploy Telemetry Microservice"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+      name: Checkout Repo
+
+    - name: Update App Service Deployment Files - Telemetry Deploy MS
+      shell: pwsh
+      working-directory: ${{ github.workspace }}
+      run: |
+        $fileList = @("src/tel-ms-deploy-ingress.yml")
+
+        $replacementList = @{
+          "[[ACRServerHostName]]" = "${{fromJSON(inputs.variables).ACRServerHostName}}"
+          "[[IngressCertName]]" = "${{fromJSON(inputs.variables).AksIngressCertSecretName }}"
+          "[[TelmsDnsName]]"="${{ fromJSON(inputs.variables).TelmsDnsName }}"
+        }
+        
+        ${{ github.workspace }}/Scripts/Update-TemplateText.ps1 -FileList $fileList -ReplacementList $replacementList
+
+    - name: Docker Build Telemetry Microservice Container Image
+      shell: bash
+      run: |
+        cosmosUri=$(az cosmosdb keys list --name ${{fromJSON(inputs.variables).CosmosDBName }} --resource-group ${{fromJSON(inputs.variables).TargetResourceGroupCore }} --type connection-strings --query connectionStrings[0].connectionString -o tsv)
+        docker build -t ${{ fromJSON(inputs.variables).ACRServerHostName }}/telemetry-micro:latest --build-arg PORT=${{ fromJSON(inputs.variables).Telemetry-ms-port }} --build-arg COSMOS_URI=$cosmosUri --build-arg COSMOS_DATABASE_NAME=${{ fromJSON(inputs.variables).CosmosDBDatabaseName }} --build-arg COSMOS_COLLECTION_NAME=${{ fromJSON(inputs.variables).CosmosDBCollectionName }} --build-arg REG=docker.io ${{ github.workspace }}/src/telemetry-microservice
+       
+    - name: Azure Container Registry Login
+      shell: bash
+      run: |
+        az acr login --name ${{ fromJSON(inputs.variables).ACRName }}        
+
+    - name: Docker Push Container to Azure Container Registry
+      shell: bash
+      run: |
+        docker push ${{ fromJSON(inputs.variables).ACRServerHostName }}/telemetry-micro:latest 
+
+    - name: Setup kubectl
+      id: install-kubectl
+      uses: azure/setup-kubectl@v3
+
+    - name: Set AKS context with AZ CLI
+      shell: bash
+      run: |
+        az aks get-credentials --name ${{ fromJSON(inputs.variables).AksName }} --resource-group ${{ fromJSON(inputs.variables).TargetResourceGroupCore }}  --admin --overwrite-existing
+
+    - name: Set AKS context with AZ CLI
+      shell: bash
+      run: |
+        kubectl apply -f ${{ github.workspace }}/src/tel-ms-deploy-ingress.yml --insecure-skip-tls-verify
+
+    - name: Download AKS Cert from Key Vault
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Set-AksCerts.ps1 -KeyVaultName ${{fromJSON(inputs.variables).KeyVaultName }} -Secrets ${{ fromJSON(inputs.variables).CertList }} -Path ${{ github.workspace }}
+        azPSVersion: "latest"
+
+    - name: Add Telms Cert to AKS
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1 -ResourceGroupName ${{fromJSON(inputs.variables).TargetResourceGroupCore }} -AKSName ${{ fromJSON(inputs.variables).AksName }} -CommandOptions @("apply", "-f", "${{ github.workspace }}/${{ fromJSON(inputs.variables).TelmsDnsName }}.yml")  
+        azPSVersion: "latest"
+
+    - name: Set Build Versions
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Set-AksDeploymentBuildVersion.ps1 -ResourceGroupName ${{fromJSON(inputs.variables).TargetResourceGroupCore }} -AKSName ${{ fromJSON(inputs.variables).AksName }} -BuildVersion ${{ github.run_id }} -DeploymentNames @("telemetry-microservice")  
+        azPSVersion: "latest"            

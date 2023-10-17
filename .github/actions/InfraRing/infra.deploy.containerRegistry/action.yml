@@ -1,0 +1,51 @@
+name: "infra.deploy.containerRegistry"
+description: "Deploy Container Registry"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+
+    - name: Update Private DNS Zones Parameters File
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/Parameters/PrivateDnsZones/parameters.json
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env  
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy Azure Container Registry Private DNS Zone
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/parameters.json privateDnsZoneName=${{ fromJSON(inputs.variables).ACRPrivateDnsZoneName }} cuaId=${{ fromJSON(inputs.variables).cuaId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAcrPrivateDnsZones-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Create Azure Container Registry
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/ContainerRegistry/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/ContainerRegistry/parameters.json acrName=${{ fromJSON(inputs.variables).ACRName }} cuaId=${{ fromJSON(inputs.variables).cuaId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAzureContainerRegistry-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy Azure Container Registry Private Endpoints
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateEndpoints/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateEndpoints/parameters.json privateEndpointName=${{ fromJSON(inputs.variables).ACRPrivateEndPointName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} targetSubnetId=${{ fromJSON(inputs.variables).PrivateEndpointTargetSubnetId }} privateDNSId=${{ fromJSON(inputs.variables).ACRPrivateEndpointPrivateDNSId }} serviceResourceId=${{ fromJSON(inputs.variables).ACRPrivateEndpointServiceResourceId }} groupId="[\"registry\"]"
+        deploymentMode: 'Incremental'
+        deploymentName: deployContainerRegistoryPrivateEndpoints-${{ github.run_id }}

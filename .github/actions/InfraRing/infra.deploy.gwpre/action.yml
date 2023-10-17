@@ -1,0 +1,68 @@
+name: "infra.deploy.gw"
+description: "Deploy Application Gateway Prereqs"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Create Base64 Cert for WebApp
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/New-AgCert.ps1 -CertDNSName ${{ fromJSON(inputs.variables).CertDNSName }} -KeyVaultName ${{ fromJSON(inputs.variables).KeyVaultName2 }} -SecretName ${{ fromJSON(inputs.variables).SecretName }} -SecretPwdName ${{ fromJSON(inputs.variables).SecretPwdName }} -Subject ${{ fromJSON(inputs.variables).AgicCertSubject }} -GitHub
+        azPSVersion: "latest"
+
+    - uses: azure/arm-deploy@v1
+      name: Create App Gateway Network Security Group
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/NetworkSecurityGroups/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/NetworkSecurityGroups/parametersAppGw.json networkSecurityGroupName=${{ fromJSON(inputs.variables).NetworkSecurityGroupNameAppGw }} cuaId=${{ fromJSON(inputs.variables).cuaId }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployNetworkSecurityGroup-${{ github.run_id }}
+
+    #TODO: REMOVE STATIC SUBNET NAME
+    - name: Set App Gateway Subnet NSG
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Set-NSG.ps1 -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} -virtualNetworkName ${{ fromJSON(inputs.variables).SpokeVnetName }} -subNetName snet-appgw-001 -nsgName ${{ fromJSON(inputs.variables).NetworkSecurityGroupNameAppGw }}
+        azPSVersion: "latest"
+
+    - uses: azure/arm-deploy@v1
+      name: Create WebApp Gateway Managed Identity
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/UserAssignedIdentities/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/UserAssignedIdentities/parameters.json userMsiName=${{ fromJSON(inputs.variables).userMsiName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployWebAppGwManagedIdentity-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Create WebApp KV Access Policy
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/AccessPolicies/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/AccessPolicies/parameters.json keyVaultName=${{ fromJSON(inputs.variables).KeyVaultName2 }} principalId=${{ fromJSON(inputs.variables).userMsiName }} tenantId=${{ fromJSON(inputs.variables).TenantId }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployKVAccessPolicy-${{ github.run_id }}
+        
+    - uses: azure/arm-deploy@v1
+      name: Create WebApp App Gateway Public IP
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PublicIPAddresses/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PublicIPAddresses/parameters.json publicIPAddressesName=${{ fromJSON(inputs.variables).WebAppPublicIPAddressesName }} workspaceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }} cuaId=${{ fromJSON(inputs.variables).cuaId }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployKVAccessPolicy-${{ github.run_id }}

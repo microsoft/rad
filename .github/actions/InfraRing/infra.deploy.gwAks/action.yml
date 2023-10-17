@@ -1,0 +1,44 @@
+name: "infra.deploy.gwAks"
+description: "Deploy GW AKS"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Assert if AGIC Needs to be Deployed
+      id: GetAGIC
+      uses: Azure/powershell@v1
+      with:
+        # Specify the Az PowerShell script here.
+        inlineScript: ${{ github.workspace }}/Scripts/Get-AGIC.ps1 -AppGatewayName ${{ fromJSON(inputs.variables).AgicApplicationGatewayName }} -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} -GitHub
+        azPSVersion: "latest"
+
+    - uses: azure/arm-deploy@v1
+      name: Create AGIC Public IP
+      if: (fromJSON(inputs.variables).DeploymentType == 'AKS' || fromJSON(inputs.variables).DeploymentType == 'Both') && steps.GetAGIC.outputs.AppGatewayExist != 'true'
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/PublicIPAddresses/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PublicIPAddresses/parameters.json publicIPAddressesName=${{ fromJSON(inputs.variables).AgicPublicIPAddressesName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} workspaceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAGICPip-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Create AGIC App Gateway
+      if: (fromJSON(inputs.variables).DeploymentType == 'AKS' || fromJSON(inputs.variables).DeploymentType == 'Both') && steps.GetAGIC.outputs.AppGatewayExist != 'true'
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/ApplicationGateway/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/ApplicationGateway/parametersRingN.json applicationGatewayName=${{ fromJSON(inputs.variables).AgicApplicationGatewayName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} vNetName=${{ fromJSON(inputs.variables).SpokeVnetName }} subnetName=${{ fromJSON(inputs.variables).AgicApplicationGatewaySubnetName }} vNetResourceGroup=${{ fromJSON(inputs.variables).TargetResourceGroupCore }} frontendPrivateIpAddress=${{ fromJSON(inputs.variables).AgicApplicationGatewayFrontendPrivateIpAddress }} frontendPublicIpResourceId=${{ fromJSON(inputs.variables).AgicApplicationGatewayFrontendPublicIpResourceId }} workspaceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAGICGateway-${{ github.run_id }}

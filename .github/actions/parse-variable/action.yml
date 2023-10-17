@@ -1,0 +1,22 @@
+name: "Parse Variables"
+description: "Parse environment variables from file"
+inputs:
+  path:  # id of input
+    description: 'the path to the .env file (including file name)'
+    required: true
+    default: '.env'
+  log-variables:
+    description: 'whether to log the variables to output or not'
+    required: false
+    default: 'false'
+  mask-variables:
+    description: 'whether to mask the variables as secrets or not'
+    required: false
+    default: 'false'
+outputs:
+  json:
+    description: "A JSON object of all the parsed variables"
+    
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

@@ -1,0 +1,45 @@
+name: "importApimCert"
+description: "Import certificate to APIM"
+inputs:
+  # variables:
+  #   required: true 
+  keyvault-name:
+    required: true
+  resource-group:
+    required: true
+  cert-name:
+    required: true 
+  apim-service-name:
+    required: true 
+  selfsigned:
+    required: true   
+  dns-name:
+    required: true       
+
+runs:
+  using: "composite"
+  steps:
+    # - name: Set APIM Certificate
+    #   shell: pwsh
+    #   working-directory: ${{ github.workspace }}
+    #   run: |
+    #     $args = @{
+    #       KeyVaultName = "${{ fromJSON(inputs.variables).KeyVaultName }}";
+    #       ResourceGroupName = "${{ fromJSON(inputs.variables).TargetResourceGroupCore }}"; 
+    #       CertName = "${{ fromJSON(inputs.variables).DncAuthCertName }}";
+    #       ApimServiceName = "${{ fromJSON(inputs.variables).ApiManagementServiceName }}";
+    #       SelfSignedCertificate = "${{ fromJSON(inputs.variables).SelfSignedCertificate }}";
+    #       DnsName = "${{ fromJSON(inputs.variables).DncApiDnsName }}"
+    #     }
+
+    #     ${{ github.workspace }}/Scripts/Set-APIMCertificate.ps1 @args
+
+    - name: Set APIM Certificate
+      shell: pwsh
+      working-directory: ${{ github.workspace }}
+      run: ${{ github.workspace }}/Scripts/Set-APIMCertificate.ps1 -KeyVaultName ${{ inputs.keyvault-name }} -ResourceGroupName ${{ inputs.resource-group }} -CertName ${{inputs.cert-name }} -ApimServiceName ${{ inputs.apim-service-name }} -SelfSignedCertificate ${{ inputs.selfsigned }} -DnsName ${{ inputs.dns-name }}
+
+    # - name: Set APIM Certificate
+    #   shell: pwsh
+    #   working-directory: ${{ github.workspace }}
+    #   run: ${{ github.workspace }}/Scripts/Set-APIMCertificate.ps1 -KeyVaultName "${{ fromJSON(inputs.variables).KeyVaultName }}" -ResourceGroupName "${{ fromJSON(inputs.variables).TargetResourceGroupCore }}" -CertName "${{ fromJSON(inputs.variables).DncAuthCertName }}" -ApimServiceName "${{ fromJSON(inputs.variables).ApiManagementServiceName }}" -SelfSignedCertificate "${{ fromJSON(inputs.variables).SelfSignedCertificate }}" -DnsName "${{ fromJSON(inputs.variables).DncApiDnsName }}" 

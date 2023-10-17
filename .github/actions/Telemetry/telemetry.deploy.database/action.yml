@@ -1,0 +1,60 @@
+name: "platform.deploy.telemetry-database"
+description: "Deploy Telemetry Database"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+      name: Checkout Repo
+
+    - name: Update DNS Parameters File
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/Parameters/PrivateDnsZones/parameters.json
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env  
+
+    - uses: azure/arm-deploy@v1
+      name: Create Cosmos DB - Telemetry Deploy DB
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/CosmosDB/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/CosmosDB/parameters.json name=${{fromJSON(inputs.variables).CosmosDBName }}  location=${{fromJSON(inputs.variables).TargetRegion }} locationName=${{fromJSON(inputs.variables).TargetRegion }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployCosmosDB-${{ github.run_id }}
+
+    - name: Create Document Collection - Telemetry Deploy DB
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Create-CosmosDB-DocumentStore.ps1 -ResourceGroupName ${{fromJSON(inputs.variables).TargetResourceGroupCore }} -CosmosDBAccountName ${{fromJSON(inputs.variables).CosmosDBName }} -CosmosDBDatabaseName ${{fromJSON(inputs.variables).CosmosDBDatabaseName }} -CosmosDBCollectionName ${{fromJSON(inputs.variables).CosmosDBCollectionName }}
+        azPSVersion: "latest"
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy Mongo Cosmos Private DNS Zone - Telemetry Deploy DB
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/parameters.json privateDnsZoneName=${{fromJSON(inputs.variables).mongoCosmosPrivateDnsZoneName }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployCosmosDBPrivateDnsZones-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy Mongo Cosmos Private Endpoints
+      id: DeployMongoDBPrivateEndpoints
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateEndpoints/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateEndpoints/parameters.json privateEndpointName=${{fromJSON(inputs.variables).MongoCosmosPrivateEndPointName }} targetSubnetId=${{fromJSON(inputs.variables).PrivateEndpointTargetSubnetId }} privateDNSId=${{fromJSON(inputs.variables).MongoCosmosPrivateEndpointPrivateDNSId }} serviceResourceId=${{fromJSON(inputs.variables).MongoCosmosPrivateEndpointServiceResourceId }} groupId="[\"MongoDB\"]"
+        deploymentMode: 'Incremental'
+        deploymentName: deployMongoCosmosPrivateEndpoints-${{ github.run_id }}

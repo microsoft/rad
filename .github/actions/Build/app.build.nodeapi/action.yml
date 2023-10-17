@@ -1,0 +1,34 @@
+name: "app.build.nodeapi"
+description: "Build Node Api"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+    - name: Add Application Insight Extension to Runner
+      run: az extension add --name application-insights
+      shell: bash
+
+    - name: Docker-Compose Build Node Api Container Image
+      shell: bash
+      run: |
+        key=$(az monitor app-insights component show --app ${{fromJSON(inputs.variables).AppInsightsName }} -g ${{fromJSON(inputs.variables).TargetResourceGroupCore }} --query instrumentationKey -o tsv)
+        cd ${{ github.workspace }}/src/node-api-microservice/src
+        docker-compose -f docker-compose-node-api-build.yml build --build-arg PORT=${{ fromJSON(inputs.variables).node-api-port }} --build-arg  VER=${{ fromJSON(inputs.variables).node-api-version }} --build-arg APPI_KEY=$key --build-arg REG=docker.io
+        docker tag node-api-micro ${{ fromJSON(inputs.variables).ACRServerHostName }}/node-api-micro:latest
+
+    - name: Azure Container Registry Login
+      shell: bash
+      run: |
+        az acr login --name ${{ fromJSON(inputs.variables).ACRName }}        
+
+    - name: Docker Push Container to Azure Container Registry
+      shell: bash
+      run: |
+        docker push ${{ fromJSON(inputs.variables).ACRServerHostName }}/node-api-micro:latest

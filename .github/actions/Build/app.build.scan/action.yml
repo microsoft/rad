@@ -1,0 +1,43 @@
+name: "app.build.scan"
+description: "App Scan"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+    - name: Test Scripts against PSScriptAnalyzer
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/tests/Pester-Analyze-PowerShell-Scripts.ps1 -CI $true
+        azPSVersion: "latest"
+
+    # - uses: actions/checkout@v3
+    - name: Install Node on Agent
+      uses: actions/setup-node@v3
+      with:
+        node-version: 14.x
+
+    - name: Mocha Unit Tests for Node-API
+      shell: pwsh
+      working-directory: ${{ github.workspace }}
+      run: |
+        cd ./src/node-api-microservice/src
+        npm install
+        npm test
+
+    - name: Use .NET Core sdk
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.x'
+
+    - name: DotNet Tests
+      shell: pwsh
+      working-directory: ${{ github.workspace }}
+      # run: dotnet build **/*Tests/*.csproj
+      run: dotnet build ./src/dotnetcore-app/DncApp.Core.Tests

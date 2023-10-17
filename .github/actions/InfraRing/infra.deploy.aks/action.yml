@@ -1,0 +1,46 @@
+name: "infra.deploy.aks"
+description: "Deploy AKS"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    # - name: AKS Admins Azure AD Group Creation and Role Assignment
+    #   id: SetADGroup
+    #   uses: Azure/powershell@v1
+    #   with:
+    #     # Specify the Az PowerShell script here.
+    #     inlineScript: ${{ github.workspace }}/Scripts/New-AzureAdGroup.ps1 -AdGroupName ${{ fromJSON(inputs.variables).AksAdminsGroupName }} -AdRoleDefinitionName "${{ fromJSON(inputs.variables).AdRoleDefinitionName }}" -UsersToAdd ${{ fromJSON(inputs.variables).UsersToAdd }}
+    #     azPSVersion: "latest"
+
+    - uses: azure/arm-deploy@v1
+      name: Create Azure Kubernetes Service
+      if: fromJSON(inputs.variables).DeploymentType == 'AKS' || fromJSON(inputs.variables).DeploymentType == 'Both'
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/AzureKubernetesService/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/AzureKubernetesService/parameters.json aksClusterName=${{ fromJSON(inputs.variables).AksName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} workspaceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }} vnetSubnetID=${{ fromJSON(inputs.variables).AksVnetSubnetId }} location=${{ fromJSON(inputs.variables).TargetRegion }} aadProfileAdminGroupObjectID=${{ fromJSON(inputs.variables).AksAadProfileAdminGroupObjectID }} aksClusterKubernetesVersion=${{ fromJSON(inputs.variables).AksVersion }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAzureKubernetesService-${{ github.run_id }}
+
+    - name: AKS Connection to ACR
+      uses: Azure/powershell@v1
+      if: fromJSON(inputs.variables).DeploymentType == 'AKS' || fromJSON(inputs.variables).DeploymentType == 'Both'
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Set-AksLinkToAcr.ps1 -AksName ${{ fromJSON(inputs.variables).AksName }} -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} -ACRName ${{ fromJSON(inputs.variables).ACRName }}
+        azPSVersion: "latest"
+
+    - name: AKS Connection to App Gateway
+      uses: Azure/powershell@v1
+      if: fromJSON(inputs.variables).DeploymentType == 'AKS' || fromJSON(inputs.variables).DeploymentType == 'Both'
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Set-AksLinkToAgic.ps1 -AksName ${{ fromJSON(inputs.variables).AksName }} -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} -AppGatewayResourceId ${{ fromJSON(inputs.variables).IngressApplicationGatewayId }}
+        azPSVersion: "latest"

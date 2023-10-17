@@ -1,0 +1,47 @@
+name: "Get Variables"
+description: "Get environment variables from file(s)"
+
+inputs:
+  target-ring: 
+    description: 'The target ring for the deployment'
+    required: true
+    default: 'Ring0'
+    
+outputs:
+  json:
+    description: "A JSON object of all the parsed variables"
+    value: ${{ steps.variables.outputs.json}}
+    
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+
+    # - uses: ./.github/actions/parse-variable
+    #   name: Parse Core Variables
+    #   id: parse-core-variables
+    #   with: 
+    #     path: ".github/Variables/Variables-Core.env"
+
+    # - uses: ./.github/actions/parse-variable
+    #   name: Parse Tel MS Variables
+    #   id: parse-telms-variables
+    #   with: 
+    #     path: ".github/Variables/Variables-Tel-MS.env"
+
+    - uses: ./.github/actions/parse-variable
+      name: Parse Ring Variables
+      id: parse-ring-variables
+      with: 
+        path: ".github/Variables/Variables-${{ inputs.target-ring }}.env"
+
+    - run: |
+        sudo apt-get install -y jq
+        output=$(echo '${{ steps.parse-ring-variables.outputs.json }}' | jq -s add)
+        echo "These are variables: ${output}"
+        output="${output//'%'/'%25'}"
+        output="${output//$'\n'/'%0A'}"
+        output="${output//$'\r'/'%0D'}"
+        echo "::set-output name=json::$output"
+      shell: bash
+      id: variables

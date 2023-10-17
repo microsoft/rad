@@ -1,0 +1,61 @@
+name: "infra.deploy.storage"
+description: "Deploy Storage"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+
+    - name: Update Private DNS Zones Parameters File
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/Parameters/PrivateDnsZones/parameters.json
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env  
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy Blob Private DNS Zone
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/parameters.json privateDnsZoneName=${{ fromJSON(inputs.variables).blobDnsZoneName }} cuaId=${{ fromJSON(inputs.variables).cuaId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployBlobPrivateDnsZone-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Create Storage Account
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/StorageAccounts/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/StorageAccounts/parameters.json storageAccountName=${{ fromJSON(inputs.variables).storageAccountName }} cuaId=${{ fromJSON(inputs.variables).cuaId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployStorageAccount-${{ github.run_id }}
+
+    - name: Set Storage Account ACL
+      uses: Azure/powershell@v1
+      with:
+        # Specify the Az PowerShell script here.
+        inlineScript: ${{ github.workspace }}/Scripts/Set-StorageAccountACL.ps1 -coreStorageAccount ${{ fromJSON(inputs.variables).storageAccountName }} -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }}
+        azPSVersion: "latest"
+
+    #- uses: azure/arm-deploy@v1
+    #  name: Deploy Storage Account Private Endpoints
+    #  with:
+    #    scope: resourcegroup
+    #    region: ${{fromJSON(inputs.variables).TargetRegion }}
+    #    resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+    #    # Figure out paths
+    #    template: ${{ github.workspace }}/ARM/PrivateEndpoints/deploy.json
+    #    parameters: ${{ github.workspace }}/Parameters/PrivateEndpoints/parameters.json privateEndpointName=${{ fromJSON(inputs.variables).BlobPrivateEndPointName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} targetSubnetId=${{ fromJSON(inputs.variables).PrivateEndpointTargetSubnetId }} privateDNSId=${{ fromJSON(inputs.variables).StorageAccountPrivateEndpointPrivateDNSId }} serviceResourceId=${{ fromJSON(inputs.variables).StorageAccountPrivateEndpointServiceResourceId }} #groupId=["blob"]
+    #    deploymentMode: 'Incremental'
+    #    deploymentName: deployStorageAccountPrivateEndpoints-${{ github.run_id }}

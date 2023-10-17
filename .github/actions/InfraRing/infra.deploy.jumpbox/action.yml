@@ -1,0 +1,36 @@
+name: "infra.deploy.jumpbox"
+description: "Deploy Jumpbox"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+  - name: Get Admin Password Keyvault
+    shell: bash
+    id: getadmin
+    run: | 
+        adminPassword=$(az keyvault secret show --name JumpboxPassword --vault-name ${{ fromJSON(inputs.variables).KeyVaultName }} --query "value" --output tsv)
+        echo "::set-output name=adminpwd::$adminPassword"
+
+  - uses: azure/arm-deploy@v1
+    name: Create Jumpbox
+    with:
+      scope: resourcegroup
+      region: ${{fromJSON(inputs.variables).TargetRegion }}
+      resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+      # Figure out paths
+      template: ${{ github.workspace }}/ARM/VirtualMachine/deploy.json
+      parameters: ${{ github.workspace }}/Parameters/VirtualMachine/parameters.json vmName=${{ fromJSON(inputs.variables).JumpboxName }} adminUsername=${{ fromJSON(inputs.variables).adminUsername }} virtualNetworkName=${{ fromJSON(inputs.variables).HubVnetName }} subnetName=${{ fromJSON(inputs.variables).JumpboxSubnet }} adminPassword=${{ steps.getadmin.outputs.adminpwd }}
+      deploymentMode: 'Incremental'
+      deploymentName: deployAGICPip-${{ github.run_id }}
+
+  # - name: Enable Azure Disk Encryption
+  #   uses: Azure/powershell@v1
+  #   with:
+  #     inlineScript: ${{ github.workspace }}/Scripts/Set-AzureDiskEncryption.ps1 -JumpboxName ${{ fromJSON(inputs.variables).JumpboxName }} -KeyVaultName ${{ fromJSON(inputs.variables).KeyVaultName2 }} -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }}
+  #     azPSVersion: "latest"

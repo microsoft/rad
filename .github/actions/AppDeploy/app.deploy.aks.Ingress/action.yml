@@ -1,0 +1,157 @@
+name: "app.deploy.aks.Ingress"
+description: "Deploy AKS Ingress"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+
+    - name: Update Kube Config and App Service Deployment Ingress Files
+      shell: pwsh
+      working-directory: ${{ github.workspace }}
+      run: |
+        $configString = ${{ github.workspace }}/Scripts/Get-AppConfigurationConnectionString.ps1 -AppConfigurationName ${{ fromJSON(inputs.variables).AACName }} -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }}    
+        $fileList = @(
+          "src\docker-compose-votingapp.yml", 
+          "src\azure-vote-all-in-one-redis-ingress.yaml", 
+          "src\node-api-deploy-ingress.yml", 
+          "src\dnc-deploy-ingress.yml"
+        )
+
+        $replacementList = @{
+          "[[ACRLoginServer]]" = "${{ fromJSON(inputs.variables).ACRName }}.azurecr.io"
+          "[[IngressCertName]]" = "${{ fromJSON(inputs.variables).AksIngressCertSecretName }}"
+          "[[DncApiDnsName]]" = "${{ fromJSON(inputs.variables).DncApiDnsName }}"
+          "[[DncWebDnsName]]" = "${{ fromJSON(inputs.variables).DncWebDnsName }}"
+          "[[NodeApiDnsName]]" = "${{ fromJSON(inputs.variables).NodeApiDnsName }}"
+          "[[VoteWebDnsName]]" = "${{ fromJSON(inputs.variables).VoteWebDnsName }}"
+          "[[AacConnectionString]]" = $configString
+        }
+
+        ${{ github.workspace }}/Scripts/Update-TemplateText.ps1 -FileList $fileList -ReplacementList $replacementList
+
+    - name: Download AKS Cert from Key Vault
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: >
+          ${{ github.workspace }}/Scripts/Set-AksCerts.ps1
+          -KeyVaultName ${{ fromJSON(inputs.variables).KeyVaultName }}
+          -Secrets ${{ fromJSON(inputs.variables).CertList }}
+          -Path ${{ github.workspace }}
+        azPSVersion: "latest"
+
+    - name: Add Node Cert to AKS
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: >
+          ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1
+          -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }}
+          -AKSName ${{ fromJSON(inputs.variables).AksName }}
+          -CommandOptions @("apply", "-f", "${{ github.workspace }}/${{ fromJSON(inputs.variables).NodeApiDnsName }}.yml")  
+        azPSVersion: "latest"
+
+    - name: Add Vote Cert to AKS
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: >
+          ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1 
+          -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} 
+          -AKSName ${{ fromJSON(inputs.variables).AksName }} 
+          -CommandOptions @("apply", "-f", "${{ github.workspace }}/${{ fromJSON(inputs.variables).VoteWebDnsName }}.yml")  
+        azPSVersion: "latest"
+
+    - name: Add DNC API Cert to AKS
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: >
+          ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1 
+          -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} 
+          -AKSName ${{ fromJSON(inputs.variables).AksName }} 
+          -CommandOptions @("apply", "-f", "${{ github.workspace }}/${{ fromJSON(inputs.variables).DncApiDnsName }}.yml")  
+        azPSVersion: "latest"
+
+    - name: Add DNC Web Cert to AKS
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: >
+          ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1 
+          -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} 
+          -AKSName ${{ fromJSON(inputs.variables).AksName }} 
+          -CommandOptions @("apply", "-f", "${{ github.workspace }}/${{ fromJSON(inputs.variables).DncWebDnsName }}.yml")  
+        azPSVersion: "latest"
+
+      # UPDATE TAGS IN DEPLOY YML
+    - name: Update Tags in Voting App Docker-Compose Deploy File
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/src/azure-vote-all-in-one-redis-ingress.yaml
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env
+
+    - name: Deploy Voting App to AKS with Ingress
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: >
+          ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1 
+          -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} 
+          -AKSName ${{ fromJSON(inputs.variables).AksName }} 
+          -CommandOptions @("apply", "-f", "${{ github.workspace }}/src/azure-vote-all-in-one-redis-ingress.yaml")  
+        azPSVersion: "latest"
+
+      # UPDATE TAGS IN DEPLOY YML
+    - name: Update Tags in Node API Docker-Compose Deploy File
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/src/node-api-deploy-ingress.yml
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env
+
+    - name: Deploy Node API Kubernetes Microservice with Ingress
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: >
+          ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1 
+          -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} 
+          -AKSName ${{ fromJSON(inputs.variables).AksName }} 
+          -CommandOptions @("apply", "-f", "${{ github.workspace }}/src/node-api-deploy-ingress.yml")  
+        azPSVersion: "latest"
+
+      # UPDATE TAGS IN DEPLOY YML
+    - name: Update Tags in DNC Docker-Compose Deploy File
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/src/dnc-deploy-ingress.yml
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env
+
+    - name: Deploy .NET Core App Kubernetes Microservice with Ingress
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: >
+          ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1 
+          -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} 
+          -AKSName ${{ fromJSON(inputs.variables).AksName }} 
+          -CommandOptions @("apply", "-f", "${{ github.workspace }}/src/dnc-deploy-ingress.yml")  
+        azPSVersion: "latest"
+
+    - name: Restart Existing AKS Services
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: |
+          $deploymentNames = @(
+            "azure-vote-front",
+            "azure-vote-back",
+            "nodeapi",
+            "dncweb",
+            "dncapi"
+          )
+
+          ${{ github.workspace }}/Scripts/Set-AksDeploymentBuildVersion.ps1 `
+            -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} `
+            -AKSName ${{ fromJSON(inputs.variables).AksName }} `
+            -BuildVersion ${{ github.run_id }} `
+            -DeploymentNames $deploymentNames  
+        azPSVersion: "latest"

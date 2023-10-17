@@ -1,0 +1,19 @@
+name: "app.deploy.appBase"
+description: "App Deploy Base"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+
+    - name: AKS Connection to ACR
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Set-AppConfigurationSettingsDncAppWeb.ps1 -AppConfigurationName ${{ fromJSON(inputs.variables).AACName }} -TenantId ${{ fromJSON(inputs.variables).TenantId }} -WebAppName ${{ fromJSON(inputs.variables).WebAppName }}  -AadAppClientId ${{ fromJSON(inputs.variables).DncAppWebAadClientId }}  -SettingsFile ${{ github.workspace }}/src/dotnetcore-app/DncApp.Web/appConfigurationSettings.json 
+        azPSVersion: "latest"

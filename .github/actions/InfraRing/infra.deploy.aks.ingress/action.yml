@@ -1,0 +1,146 @@
+name: "infra.deploy.ingress"
+description: "Deploy Ingress"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+  env:
+    description: "Target Ring"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    # TODO SET AKS ADMINS GROUP
+    # - name: AKS Admins Azure AD Group Creation and Role Assignment
+    #   id: SetADGroup
+    #   uses: Azure/powershell@v1
+    #   with:
+    #     # Specify the Az PowerShell script here.
+    #     inlineScript: ${{ github.workspace }}/Scripts/New-AzureAdGroup.ps1 -AdGroupName ${{ fromJSON(inputs.variables).AksAdminsGroupName }} -AdRoleDefinitionName "${{ fromJSON(inputs.variables).AdRoleDefinitionName }}" -UsersToAdd ${{ fromJSON(inputs.variables).UsersToAdd }}
+    #     azPSVersion: "latest"
+
+    - uses: azure/arm-deploy@v1
+      name: Create Azure Kubernetes Service
+      if: ${{ inputs.env == 'DEV'}}
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/AzureKubernetesService/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/AzureKubernetesService/parametersDev.json aksClusterName=${{ fromJSON(inputs.variables).AksName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} workspaceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }} vnetSubnetID=${{ fromJSON(inputs.variables).AksVnetSubnetId }} location=${{ fromJSON(inputs.variables).TargetRegion }} aadProfileAdminGroupObjectID=${{ fromJSON(inputs.variables).AksAadProfileAdminGroupObjectID }} aksClusterKubernetesVersion=${{ fromJSON(inputs.variables).AksVersion }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAzureKubernetesService-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Create Azure Kubernetes Service
+      if: ${{ inputs.env != 'DEV'}}
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/AzureKubernetesService/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/AzureKubernetesService/parameters.json aksClusterName=${{ fromJSON(inputs.variables).AksName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} workspaceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }} vnetSubnetID=${{ fromJSON(inputs.variables).AksVnetSubnetId }} location=${{ fromJSON(inputs.variables).TargetRegion }} aadProfileAdminGroupObjectID=${{ fromJSON(inputs.variables).AksAadProfileAdminGroupObjectID }} aksClusterKubernetesVersion=${{ fromJSON(inputs.variables).AksVersion }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAzureKubernetesService-${{ github.run_id }}
+
+    # GRANT AKS MANAGED SERVICE ID READ PERMISSIONS ON THE VIRTUAL NETWORK
+    - name: Assign AKS MSI Read Permissions to Spoke Vnet
+      shell: bash
+      run: |
+        msi=$(az aks show -g ${{fromJSON(inputs.variables).TargetResourceGroupCore }} -n ${{ fromJSON(inputs.variables).AksName }} --query "identity.principalId" -o tsv)
+        vnetid=$(az network vnet show --name ${{fromJSON(inputs.variables).SpokeVnetName }} --resource-group ${{fromJSON(inputs.variables).TargetResourceGroupCore }} --query "id" -o tsv)
+        az role assignment create --role 'Reader' --assignee-object-id $msi --assignee-principal-type ServicePrincipal --scope $vnetid
+    
+    - name: AKS Connection to ACR
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Set-AksLinkToAcr.ps1 -AksName ${{ fromJSON(inputs.variables).AksName }} -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} -ACRName ${{ fromJSON(inputs.variables).ACRName }}
+        azPSVersion: "latest"
+
+    - name: Add Cert Manager to the registry
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Add-CertManagerToRegistry.ps1 -REGISTRY_NAME ${{ fromJSON(inputs.variables).ACRName }}
+        azPSVersion: "latest"    
+
+    - name: Create cert manager namespace
+      uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Invoke-Kubectl.ps1 -ResourceGroupName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }} -AKSName ${{ fromJSON(inputs.variables).AksName }} -CommandOptions @("apply", "-f", "${{ github.workspace }}/src/cert-manager-namespace.yml") 
+        azPSVersion: "latest"       
+
+      # UPDATE INGRESS CONTROLLER SETUP SCRIPT - UPDATING LOAD BALANCER IP ADDRESS
+    - name: Update Tags in Ingress Controller HELM chart
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/Scripts/Ingress/setup-ingress.sh
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env
+
+    - name: Install Ingress and Cert Manager using Helm
+      shell: bash
+      run: |
+        chmod +x ${{ github.workspace }}/Scripts/Ingress/setup-ingress.sh
+        ${{ github.workspace }}/Scripts/Ingress/setup-ingress.sh
+      env: 
+        STAGE: "dev"
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy A Record for vote web Private DNS Zone
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/A/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/A/parameters.json zoneName=${{ fromJSON(inputs.variables).DnsZoneName }} arecordIpAddress=${{ fromJSON(inputs.variables).LoadBalancerIP }} recordName=${{ fromJSON(inputs.variables).VoteWebName }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployVoteWebPrivateDnsZone-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy A Record for telms Private DNS Zone
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/A/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/A/parameters.json zoneName=${{ fromJSON(inputs.variables).DnsZoneName }} arecordIpAddress=${{ fromJSON(inputs.variables).LoadBalancerIP }} recordName=${{ fromJSON(inputs.variables).TelmsName }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployTelmsWebPrivateDnsZone-${{ github.run_id }}     
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy A Record for dnc Private DNS Zone
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/A/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/A/parameters.json zoneName=${{ fromJSON(inputs.variables).DnsZoneName }} arecordIpAddress=${{ fromJSON(inputs.variables).LoadBalancerIP }} recordName=${{ fromJSON(inputs.variables).DncWebName }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployDncWebPrivateDnsZone-${{ github.run_id }}      
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy A Record for dnc api Private DNS Zone
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/A/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/A/parameters.json zoneName=${{ fromJSON(inputs.variables).DnsZoneName }} arecordIpAddress=${{ fromJSON(inputs.variables).LoadBalancerIP }} recordName=${{ fromJSON(inputs.variables).DncApiName }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployDncWebPrivateDnsZone-${{ github.run_id }} 
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy A Record for node api Private DNS Zone
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/A/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/A/parameters.json zoneName=${{ fromJSON(inputs.variables).DnsZoneName }} arecordIpAddress=${{ fromJSON(inputs.variables).LoadBalancerIP }} recordName=${{ fromJSON(inputs.variables).NodeApiName }} 
+        deploymentMode: 'Incremental'
+        deploymentName: deployDncWebPrivateDnsZone-${{ github.run_id }} 

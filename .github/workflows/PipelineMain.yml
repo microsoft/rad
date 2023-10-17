@@ -1,0 +1,140 @@
+name: LED Deploy v1
+
+on: 
+  workflow_dispatch:
+    inputs:
+      deploy-core-infra:
+        description: 'Deploy Core Infra'
+        required: true
+        type: boolean
+        default: false
+      deploy-ring-infra:
+        description: 'Deploy Ring Infra'
+        required: true
+        type: boolean
+        default: false
+      deploy-telemetry:
+        description: 'Deploy Telemetry'
+        required: true
+        type: boolean
+        default: false
+      deploy-app-platform:
+        description: 'Deploy App Platform'
+        required: true
+        type: boolean
+        default: false
+      build-apps:
+        description: 'Build Apps'
+        required: true
+        type: boolean
+        default: false
+      deploy-apps:
+        description: 'Deploy Apps'
+        required: true
+        type: boolean
+        default: false
+      deploy-gateway:
+        description: 'Deploy Gateway'
+        required: true
+        type: boolean
+        default: false        
+      target-ring:
+        description: 'Target Ring'
+        required: true
+        type: choice
+        options:
+        - Ring0
+        - Ring1
+        - Ring2
+        - Ring3
+        default: 'Ring0'
+
+jobs:
+  job-control:
+    name: Job-Control
+    runs-on: [self-hosted, Linux]
+    outputs: 
+      target-ring: ${{ github.event.inputs.target-ring }}
+      variables: ${{ steps.get-variables.outputs.json }}
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout Repo
+
+      - uses: ./.github/actions/Common/getVariables
+        name: Get Variables
+        id: get-variables
+        with: 
+          target-ring: ${{ inputs.target-ring }}
+
+  create-artifacts:
+    needs: [job-control]
+    uses: ./.github/workflows/create-artifacts.yml
+    with:
+      target-ring: ${{ github.event.inputs.target-ring }}
+      variables: ${{ needs.job-control.outputs.variables }}
+    secrets: inherit   
+
+  deploy-core-infra:
+    needs: [job-control]
+    if: ${{ always() && github.event.inputs.deploy-core-infra == 'true' }}
+    uses: ./.github/workflows/deploy-core-infra.yml
+    with:
+      target-ring: ${{ github.event.inputs.target-ring }}
+      variables: ${{ needs.job-control.outputs.variables }}
+    secrets: inherit
+
+  # deploy-ring-infra:
+  #   needs: [job-control, deploy-core-infra]
+  #   if: ${{ always() && github.event.inputs.deploy-ring-infra == 'true' }}
+  #   uses: ./.github/workflows/deploy-ring-infra.yml
+  #   with:
+  #     target-ring: ${{ github.event.inputs.target-ring }}
+  #     variables: ${{ needs.job-control.outputs.variables }}
+  #   secrets: inherit
+      
+  # deploy-telemetry:
+  #   needs: [job-control, deploy-ring-infra]
+  #   if: ${{  always() && github.event.inputs.deploy-telemetry == 'true' }}
+  #   uses: ./.github/workflows/deploy-telemetry.yml
+  #   with:
+  #     target-ring: ${{ github.event.inputs.target-ring }}
+  #     variables: ${{ needs.job-control.outputs.variables }}
+  #   secrets: inherit
+
+  # deploy-app-platform:
+  #   needs: [job-control, deploy-ring-infra]
+  #   if: ${{  always() && github.event.inputs.deploy-app-platform == 'true' }}
+  #   uses: ./.github/workflows/deploy-app-platform.yml
+  #   with:
+  #     target-ring: ${{ github.event.inputs.target-ring }}
+  #     variables: ${{ needs.job-control.outputs.variables }}
+  #   secrets: inherit
+
+  # build-apps:
+  #   needs: [job-control, deploy-ring-infra, deploy-app-platform]
+  #   if: ${{  always() && github.event.inputs.build-apps == 'true' }}
+  #   uses: ./.github/workflows/build-apps.yml
+  #   with:
+  #     target-ring: ${{ github.event.inputs.target-ring }}
+  #     variables: ${{ needs.job-control.outputs.variables}}
+  #   secrets: inherit
+
+  # deploy-apps:
+  #   needs: [job-control, deploy-ring-infra, build-apps]
+  #   if: ${{  always() && github.event.inputs.deploy-apps == 'true' }}
+  #   uses: ./.github/workflows/deploy-apps.yml
+  #   with:
+  #     target-ring: ${{ github.event.inputs.target-ring }}
+  #     variables: ${{ needs.job-control.outputs.variables }}
+  #   secrets: inherit
+
+  # deploy-gateway:
+  #   needs: [job-control, deploy-ring-infra]
+  #   if: ${{  always() && github.event.inputs.deploy-gateway == 'true' }}
+  #   uses: ./.github/workflows/deploy-gateway.yml
+  #   with:
+  #     target-ring: ${{ github.event.inputs.target-ring }}
+  #     variables: ${{ needs.job-control.outputs.variables }}
+  #     deploy-telemetry: ${{ github.event.inputs.deploy-telemetry }}
+  #   secrets: inherit    

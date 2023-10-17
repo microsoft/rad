@@ -1,0 +1,26 @@
+name: "update-paramfile"
+description: "Updates the specified param file by replacing tokens with variables."
+
+inputs:
+
+  parameter-file: 
+    description: 'The full path to the parameter file to be updated'
+    required: true
+    default: ''
+  variables-file: 
+    description: 'The full path to the variables file.'
+    required: true
+    default: ''    
+  args: 
+    description: 'Additional command line arguments: -KvVersionKey Value'
+    required: false
+    default: ''    
+   
+runs:
+  using: "composite"
+  steps:
+
+    - uses: Azure/powershell@v1
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Update-ParamFile.ps1 -VariablesFile ${{ inputs.variables-file }} -ParametersFile ${{ inputs.parameter-file }} ${{inputs.args}}
+        azPSVersion: "latest"

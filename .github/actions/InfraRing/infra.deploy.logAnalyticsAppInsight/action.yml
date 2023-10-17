@@ -1,0 +1,35 @@
+name: "infra.deploy.logAnalyticsAppInsight"
+description: "Deploy Log Analytics & App Insights"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: azure/arm-deploy@v1
+      name: Enable Log Analytics
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/LogAnalytics/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/LogAnalytics/parameters.json logAnalyticsWorkspaceName=${{ fromJSON(inputs.variables).LogAnalyticsWorkspaceName }} cuaId=${{ fromJSON(inputs.variables).cuaId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployLogAnalytics-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Attach Application Insights to Log Analytics
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/ApplicationInsights/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/ApplicationInsights/parameters.json appInsightsName=${{ fromJSON(inputs.variables).AppInsightsName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} appInsightsWorkspaceResourceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployApplicationInsights-${{ github.run_id }}

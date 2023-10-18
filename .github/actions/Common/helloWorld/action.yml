@@ -1,5 +1,5 @@
 name: Hello World
-description: 'Echoes "Hello, World!" using a bash'
+description: 'Echoes "Hello, World!" using bash'
 author: Jim Davis
 inputs:
   who-to-greet:
@@ -11,5 +11,5 @@ runs:
   steps:
     - uses: actions/checkout@v2
     - run: |
-        echo "$Hello {{ inputs.who-to-greet }}"
+        echo "Hello ${{ github.eventinputs.who-to-greet }}"
       shell: bash

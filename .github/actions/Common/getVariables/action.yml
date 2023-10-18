@@ -17,18 +17,6 @@ runs:
   steps:
     - uses: actions/checkout@v2
 
-    # - uses: ./.github/actions/parse-variable
-    #   name: Parse Core Variables
-    #   id: parse-core-variables
-    #   with: 
-    #     path: ".github/Variables/Variables-Core.env"
-
-    # - uses: ./.github/actions/parse-variable
-    #   name: Parse Tel MS Variables
-    #   id: parse-telms-variables
-    #   with: 
-    #     path: ".github/Variables/Variables-Tel-MS.env"
-
     - uses: ./.github/actions/parse-variable
       name: Parse Ring Variables
       id: parse-ring-variables

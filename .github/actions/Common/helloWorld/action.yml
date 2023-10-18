@@ -6,6 +6,12 @@ inputs:
     description: 'Who to greet'
     required: true
     default: 'World'
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true    
 runs:
   using: "composite"
   steps:

@@ -1,15 +1,21 @@
 name: Hello World
-description: 'Echoes "Hello, World!" using a bash'
+description: 'Echoes "Hello, World!" using bash'
 author: Jim Davis
 inputs:
   who-to-greet:
     description: 'Who to greet'
     required: true
     default: 'World'
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true    
 runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v2
     - run: |
-        echo "$Hello {{ inputs.who-to-greet }}"
+        echo "Hello ${{ github.event.inputs.who-to-greet }}"
       shell: bash

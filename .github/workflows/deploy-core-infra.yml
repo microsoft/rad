@@ -43,3 +43,5 @@ jobs:
         uses: ./.github/actions/Common/helloWorld
         with:
           who-to-greet: 'world'
+          variables: ${{ inputs.variables }}
+          target-ring: ${{ inputs.target-ring }}

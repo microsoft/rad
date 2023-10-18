@@ -11,5 +11,5 @@ runs:
   steps:
     - uses: actions/checkout@v2
     - run: |
-        echo "Hello ${{ github.eventinputs.who-to-greet }}"
+        echo "Hello ${{ github.event.inputs.who-to-greet }}"
       shell: bash

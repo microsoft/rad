@@ -84,14 +84,14 @@ jobs:
       variables: ${{ needs.job-control.outputs.variables }}
     secrets: inherit
 
-  # deploy-ring-infra:
-  #   needs: [job-control, deploy-core-infra]
-  #   if: ${{ always() && github.event.inputs.deploy-ring-infra == 'true' }}
-  #   uses: ./.github/workflows/deploy-ring-infra.yml
-  #   with:
-  #     target-ring: ${{ github.event.inputs.target-ring }}
-  #     variables: ${{ needs.job-control.outputs.variables }}
-  #   secrets: inherit
+  deploy-ring-infra:
+    needs: [job-control, deploy-core-infra]
+    if: ${{ always() && github.event.inputs.deploy-ring-infra == 'true' }}
+    uses: ./.github/workflows/deploy-ring-infra.yml
+    with:
+      target-ring: ${{ github.event.inputs.target-ring }}
+      variables: ${{ needs.job-control.outputs.variables }}
+    secrets: inherit
       
   # deploy-telemetry:
   #   needs: [job-control, deploy-ring-infra]

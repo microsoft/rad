@@ -7,27 +7,27 @@ on:
         description: 'Deploy Core Infra'
         required: true
         type: boolean
-        default: false
+        default: true
       deploy-ring-infra:
         description: 'Deploy Ring Infra'
         required: true
         type: boolean
-        default: false
+        default: true
       deploy-app-platform:
         description: 'Deploy App Platform'
         required: true
         type: boolean
-        default: false
+        default: true
       build-apps:
         description: 'Build Apps'
         required: true
         type: boolean
-        default: false
+        default: true
       deploy-apps:
         description: 'Deploy Apps'
         required: true
         type: boolean
-        default: false    
+        default: true    
       target-ring:
         description: 'Target Ring'
         required: true

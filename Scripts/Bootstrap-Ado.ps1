@@ -1,9 +1,3 @@
-#---------------------------------------------------------------------------------------------------------
-#	<copyright file="Bootstrap.ps1" company="Microsoft" application="Azure DevOps Bootstrap Slim">
-#	Copyright  © Microsoft Corporation.  All rights reserved.
-#	</copyright>
-#------------------------------------------------------------------------------------------------------------
-
 <#
 .SYNOPSIS
     A simple script that:

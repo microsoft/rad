@@ -1,0 +1,50 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "eastus2"
+        },
+        "subnetName": {
+            "value": "snet-privep-001"
+        },    
+        "virtualNetworkId": {
+            "value": "/subscriptions/712c528a-c07c-4132-a606-02353d286ddb/resourceGroups/rg-canary-ring0-01/providers/Microsoft.Network/virtualNetworks/vnet-spoke-eastus2-01"
+        },
+        "virtualMachineName": {
+            "value": "actionsrunner1"
+        },
+        "virtualMachineRG": {
+            "value": "github"
+        },
+        "osDiskType": {
+            "value": "Premium_LRS"
+        },
+        "osDiskDeleteOption": {
+            "value": "Delete"
+        },
+        "virtualMachineSize": {
+            "value": "Standard_B2s"
+        },
+        "nicDeleteOption": {
+            "value": "Delete"
+        },
+        "adminUsername": {
+            "value": "xadmin"
+        },
+        "adminPublicKey": {
+            "value": null
+        },        
+        "imageReference": {
+            "value": {
+                "publisher": "canonical",
+                "offer": "0001-com-ubuntu-server-focal",
+                "sku": "20_04-lts-gen2",
+                "version": "latest"
+            }
+        },
+        "linuxBase64Script":{
+            "value": ""
+        }
+    }
+}

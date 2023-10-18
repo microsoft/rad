@@ -1,4 +1,4 @@
-name: LED Deploy v1
+name: Pipeline-Main
 
 on: 
   workflow_dispatch:

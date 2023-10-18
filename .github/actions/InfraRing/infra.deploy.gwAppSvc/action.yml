@@ -1,0 +1,73 @@
+name: "infra.deploy.gwAppSvc"
+description: "Deploy Application Gateway"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    #- name: Create Base64 Cert for WebApp
+    #  uses: Azure/powershell@v1
+    #  with:
+    #    # Specify the Az PowerShell script here.
+    #    inlineScript: ${{ github.workspace }}/Scripts/New-AgCert.ps1 -CertDNSName ${{fromJSON(inputs.variables).CertDNSName }} -KeyVaultName ${{fromJSON(inputs.variables).KeyVaultName2 }} -SecretName ${{fromJSON(inputs.variables).SecretName }} -SecretPwdName ${{fromJSON(inputs.variables).SecretPwdName }} -Subject ${{fromJSON(inputs.variables).AgicCertSubject }}
+    #    azPSVersion: "latest"
+
+    - name: Update App Gateway Parameters File
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/Parameters/ApplicationGateway/parametersRingN.json
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env  
+
+    - uses: azure/arm-deploy@v1
+      name: Create WebApp Gateway Managed Identity
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/UserAssignedIdentities/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/UserAssignedIdentities/parameters.json userMsiName=${{ fromJSON(inputs.variables).userMsiName }} cuaId=${{ fromJSON(inputs.variables).cuaId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployWebAppGwManagedIdentity-${{ github.run_id }}
+
+    #- uses: azure/arm-deploy@v1
+    #  name: Create WebApp KV Access Policy
+    #  with:
+    #    scope: resourcegroup
+    #    region: ${{fromJSON(inputs.variables).TargetRegion }}
+    #    resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+    #    # Figure out paths
+    #    template: ${{ github.workspace }}/ARM/AccessPolicies/deploy.json
+    #    parameters: ${{ github.workspace }}/Parameters/AccessPolicies/parameters.json KeyvaultName=${{ fromJSON(inputs.variables).KeyVaultName2 }} principalId=${{ fromJSON(inputs.variables).userMsiName }} tenantId=${{ fromJSON(inputs.variables).TenantId }}
+    #    deploymentMode: 'Incremental'
+    #    deploymentName: deployKVAccessPolicy-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Create WebApp App Gateway Public IP
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/ARM/PublicIPAddresses/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PublicIPAddresses/parameters.json publicIPAddressesName=${{ fromJSON(inputs.variables).WebAppPublicIPAddressesName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} workspaceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployWebAppGwPublicIp-${{ github.run_id }}
+
+    #- uses: azure/arm-deploy@v1
+    #  name: Create WebApp App Gateway
+    #  if: fromJSON(inputs.variables).DeploymentType == 'WebApp' || fromJSON(inputs.variables).DeploymentType == 'Both'
+    #  with:
+    #    scope: resourcegroup
+    #    region: ${{fromJSON(inputs.variables).TargetRegion }}
+    #    resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+    #    # Figure out paths
+    #    template: ${{ github.workspace }}/ARM/ApplicationGateway/deploy.json
+    #    parameters: ${{ github.workspace }}/Parameters/ApplicationGateway/parametersRingN.json applicationGatewayName=${{ fromJSON(inputs.variables).webAppApplicationGatewayName }} cuaId=${{ fromJSON(inputs.variables).cuaId }} vNetName=${{ fromJSON(inputs.variables).SpokeVnetName }} subnetName=${{ fromJSON(inputs.variables).WebAppApplicationGatewaySubnetName }} vNetResourceGroup=${{ fromJSON(inputs.variables).TargetResourceGroupCore }} frontendPrivateIpAddress=${{ fromJSON(inputs.variables).WebAppApplicationGatewayFrontendPrivateIpAddress }} frontendPublicIpResourceId=${{ fromJSON(inputs.variables).WebAppApplicationGatewayFrontendPublicIpResourceId }} workspaceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }}
+    #    deploymentMode: 'Incremental'
+    #    deploymentName: deployWebAppAppGw-${{ github.run_id }}

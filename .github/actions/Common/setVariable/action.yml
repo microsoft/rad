@@ -1,0 +1,29 @@
+name: "common.set-variable"
+description: "Get environment variables from file(s)"
+
+inputs:
+  variable-name: 
+    required: true
+      variable-name: 
+    required: true
+    
+outputs:
+  value:
+    description: "A JSON object of all the parsed variables"
+    value: ${{ steps.variables.outputs.json}}
+    
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+
+    - run: |
+        sudo apt-get install -y jq
+        output=$(echo '${{ steps.parse-core-variables.outputs.json }} ${{ steps.parse-telms-variables.outputs.json }} ${{ steps.parse-ring-variables.outputs.json }}' | jq -s add)
+        output=$(echo '${{ steps.parse-core-variables.outputs.json }} ${{ steps.parse-ring-variables.outputs.json }}' | jq -s add)
+        echo "These are variables: ${output}"
+        output="${output//'%'/'%25'}"
+        output="${output//$'\n'/'%0A'}"
+        output="${output//$'\r'/'%0D'}"
+        echo "::set-output name=json::$output"
+      shell: bash

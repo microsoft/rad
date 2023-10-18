@@ -1,0 +1,38 @@
+name: "app.build.dnc"
+description: "DotNet Core App"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+
+    - name: Docker-Compose Build Dotnet Core Container Image
+      shell: bash
+      working-directory: ${{ github.workspace }}/src/dotnetcore-app
+      run: |
+        cd ${{ github.workspace }}/src/dotnetcore-app/
+        docker-compose -f docker-compose-dnc-build.yml build --build-arg CONFIG=${{ fromJSON(inputs.variables).BuildConfiguration }}
+        docker tag dnc-web ${{ fromJSON(inputs.variables).ACRServerHostName }}/dnc-web
+        docker tag dnc-api ${{ fromJSON(inputs.variables).ACRServerHostName }}/dnc-api
+        
+    - name: Azure Container Registry Login
+      shell: bash
+      run: |
+        az acr login --name ${{ fromJSON(inputs.variables).ACRName }}        
+
+    - name: Docker Push Container to Vote Image to Azure Container Registry
+      shell: bash
+      run: |
+        docker push ${{ fromJSON(inputs.variables).ACRServerHostName }}/dnc-web:latest
+        docker push ${{ fromJSON(inputs.variables).ACRServerHostName }}/dnc-api:latest
+
+
+
+ 
+

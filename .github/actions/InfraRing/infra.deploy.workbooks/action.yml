@@ -1,0 +1,35 @@
+name: "infra.deploy.workbooks"
+description: "Deploy Workbooks"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: azure/arm-deploy@v1
+      name: Deploy App GW Workbook
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/Workbooks/AppGwy-Workbook.json
+        parameters: workbookSourceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }} workbookId=${{ fromJSON(inputs.variables).AppGWWorkbookId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAppGWWorkbook-${{ github.run_id }}
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy KV Workbook
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        # Figure out paths
+        template: ${{ github.workspace }}/Workbooks/Keyvault-Workbook.json
+        parameters: workbookSourceId=${{ fromJSON(inputs.variables).LogAWorkspaceId }} workbookId=${{ fromJSON(inputs.variables).KVWorkbookId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployKVWorkbook-${{ github.run_id }}

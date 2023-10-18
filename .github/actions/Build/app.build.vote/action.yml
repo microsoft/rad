@@ -1,0 +1,51 @@
+name: "app.build.vote"
+description: "Build Vote App"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+
+    - name: Update App Configuration
+      shell: pwsh
+      working-directory: ${{ github.workspace }}
+      run: |
+        $ClientSecret = Get-AzKeyVaultSecret -Name voteWebSecret -VaultName ${{ fromJSON(inputs.variables).KeyVaultName }}  -AsPlainText
+        $SessionSecret = Get-AzKeyVaultSecret -Name sessionsecret -VaultName ${{ fromJSON(inputs.variables).KeyVaultName }}  -AsPlainText
+        $Authority = Get-AzKeyVaultSecret -Name authority -VaultName ${{ fromJSON(inputs.variables).KeyVaultName }}  -AsPlainText
+        $fileList = @( "src/azure-vote/azure-vote/config_file.cfg" )
+        $replacementList = @{
+          "[[clientId]]" = "${{fromJSON(inputs.variables).VoteAppWebAadClientId}}"
+          "[[clientSecret]]" = $ClientSecret
+          "[[sessionSecret]]" = $SessionSecret
+          "[[authority]]" = $Authority
+          "[[ADOBuildVersion]]" = ${{ github.run_id}}
+        }
+        ${{ github.workspace }}/Scripts/Update-TemplateText.ps1 -FileList $fileList -ReplacementList $replacementList        
+  
+    - name: Docker-Compose Build Vote Container Image
+      shell: bash
+      run: |
+        cd ${{ github.workspace }}/src
+        docker-compose -f docker-compose-build.yaml build --build-arg REG=docker.io
+        docker tag azure-vote-front ${{ fromJSON(inputs.variables).ACRServerHostName }}/azure-vote-front
+        docker tag redis ${{ fromJSON(inputs.variables).ACRServerHostName }}/redis
+        
+    - name: Azure Container Registry Login
+      shell: bash
+      run: |
+        az acr login --name ${{ fromJSON(inputs.variables).ACRName }}        
+
+    - name: Docker Push Container to Vote Images to Azure Container Registry
+      shell: bash
+      run: |
+        docker push ${{ fromJSON(inputs.variables).ACRServerHostName }}/azure-vote-front:latest
+        docker push ${{ fromJSON(inputs.variables).ACRServerHostName }}/redis:latest
+
+

@@ -1,0 +1,29 @@
+name: Publish Artifacts
+
+on:
+  workflow_call:
+    inputs:
+      target-ring:
+        required: true
+        type: string 
+      variables:
+        required: true
+        type: string     
+ 
+jobs:
+  create-artifacts:
+    runs-on: ${{fromJSON(inputs.variables).RunnerLabel }}
+    name: Publish Artifacts
+    if: fromJSON(inputs.variables).DeploymentType == 'None'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          path: bsd
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-directory
+          path: bsd/
+          retention-days: 2

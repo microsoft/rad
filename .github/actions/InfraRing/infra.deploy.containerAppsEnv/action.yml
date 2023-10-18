@@ -1,0 +1,58 @@
+name: "infra.deploy.containerAppsEnv"
+description: "Deploy Azure Container Apps Env"
+inputs:
+  variables:
+    description: "Variables"
+    required: true
+  target-ring:
+    description: "Target Ring"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: azure/arm-deploy@v1
+      name: Create Azure Container Apps Environment
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/ContainerApps/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/ContainerApps/parameters.json environmentName=${{ fromJSON(inputs.variables).ACAEnvName }} logAnalyticsWorkspaceName=${{ fromJSON(inputs.variables).LogAnalyticsWorkspaceName }} runtimeSubnetId=${{ fromJSON(inputs.variables).ACARuntimeVnetId }} infrastructureSubnetId=${{ fromJSON(inputs.variables).ACAInfraVnetId }} location=${{ fromJSON(inputs.variables).TargetRegion }} appInsightsName=${{ fromJSON(inputs.variables).appInsightsName }}      
+        deploymentMode: 'Incremental'
+        deploymentName: deployAzureContainerAppsEnv-${{ github.run_id }}
+
+    - name: Get Aca Env Attributed for DNS Config
+      uses: Azure/powershell@v1
+      # if: fromJSON(inputs.variables).DeploymentType == 'AKS' || fromJSON(inputs.variables).DeploymentType == 'Both'
+      with:
+        inlineScript: ${{ github.workspace }}/Scripts/Get-AzureContAppDetail.ps1 -ContainerAppsEnvName ${{ fromJSON(inputs.variables).ACAEnvName }} -ContainerAppsEnvRgName ${{ fromJSON(inputs.variables).TargetResourceGroupCore }}  
+        azPSVersion: "latest"
+
+    - name: Update Hub vNet Parameters File
+      uses: ./.github/actions/Common/updateParamFile
+      with:
+        parameter-file: ${{ github.workspace }}/Parameters/PrivateDnsZones/parameters.json
+        variables-file: ${{ github.workspace }}/.github/Variables/Variables-${{ inputs.target-ring }}.env  
+
+    - uses: azure/arm-deploy@v1
+      name: Deploy ACA Private DNS Zone
+      with:
+        scope: resourcegroup
+        region: ${{fromJSON(inputs.variables).TargetRegion }}
+        resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+        template: ${{ github.workspace }}/ARM/PrivateDnsZones/deploy.json
+        parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/parameters.json  privateDnsZoneName=${{ fromJSON(inputs.variables).AACPrivateDnsZoneName }} cuaId=${{ fromJSON(inputs.variables).cuaId }}
+        deploymentMode: 'Incremental'
+        deploymentName: deployAzureContainerAppsEnv-${{ github.run_id }}
+
+    # TODO ASK VINCENZO FIGURE OUT WHAT THIS IS FOR BEFORE ENABLING BECAUSE AcaARecordIp ISN'T DEFINED IN ANY VARIABLES FILES
+    # - uses: azure/arm-deploy@v1
+    #   name: Deploy A Record for ACA Private DNS Zone
+    #   with:
+    #     scope: resourcegroup
+    #     region: ${{fromJSON(inputs.variables).TargetRegion }}
+    #     resourceGroupName: ${{fromJSON(inputs.variables).TargetResourceGroupCore }}
+    #     template: ${{ github.workspace }}/ARM/PrivateDnsZones/A/deploy.json
+    #     parameters: ${{ github.workspace }}/Parameters/PrivateDnsZones/A/parameters.json zoneName=${{ fromJSON(inputs.variables).AACPrivateDnsZoneName }} arecordIpAddress=${{ fromJSON(inputs.variables).AcaARecordIp }}
+    #     deploymentMode: 'Incremental'
+    #     deploymentName: deployAcaARecord-${{ github.run_id }}

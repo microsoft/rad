@@ -37,6 +37,7 @@ on:
         - Ring1
         - Ring2
         - Ring3
+        - Test
         default: 'Ring0'
 
 jobs:

@@ -80,7 +80,6 @@ jobs:
     name: DeployRingInfra_2
     runs-on: ${{fromJSON(inputs.variables).RunnerLabel }}
     needs: [DeployRingInfra_0]
-    if: fromJSON(inputs.variables).DeploymentType == 'AKS'
     steps:
       # LOGIN AZ POWERSHELL
       - uses: azure/login@v1
@@ -113,7 +112,6 @@ jobs:
     name: DeployRingInfra_3
     runs-on: ${{fromJSON(inputs.variables).RunnerLabel }}
     needs: [DeployRingInfra_2]
-    if: ${{ fromJSON(inputs.variables).DeploymentType == 'AKS' || fromJSON(inputs.variables).DeploymentType == 'All' }}
     steps:
       # LOGIN AZ POWERSHELL
       - uses: azure/login@v1
@@ -146,7 +144,6 @@ jobs:
     name: DeployRingInfra_4
     runs-on: ${{fromJSON(inputs.variables).RunnerLabel }}
     needs: [DeployRingInfra_2]
-    if: fromJSON(inputs.variables).DeployAPIM == 'true'
     steps:
       # LOGIN AZ POWERSHELL
       - uses: azure/login@v1

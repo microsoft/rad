@@ -17,7 +17,7 @@ permissions:
 jobs:
    build-apps:
     runs-on: ${{fromJSON(inputs.variables).RunnerLabel }}
-    name: build apps
+    name: Build Apps
     steps:
       # LOGIN AZ POWERSHELL
       - uses: azure/login@v1

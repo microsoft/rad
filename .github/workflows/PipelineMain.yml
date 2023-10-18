@@ -13,11 +13,6 @@ on:
         required: true
         type: boolean
         default: false
-      deploy-telemetry:
-        description: 'Deploy Telemetry'
-        required: true
-        type: boolean
-        default: false
       deploy-app-platform:
         description: 'Deploy App Platform'
         required: true
@@ -32,12 +27,7 @@ on:
         description: 'Deploy Apps'
         required: true
         type: boolean
-        default: false
-      deploy-gateway:
-        description: 'Deploy Gateway'
-        required: true
-        type: boolean
-        default: false        
+        default: false    
       target-ring:
         description: 'Target Ring'
         required: true

@@ -1,7 +1,7 @@
 variables:
 
 - name: AppName
-  value: adotest
+  value: [REPLACE]
 
 - name: Env
   value: ring0
@@ -9,50 +9,44 @@ variables:
 - name: InstanceNumber
   value: 1
 
-- name: pTest
-  value: test
-
 - name: parameterRingN
-  value: $(pTest)  
+  value: ring0
 
 - name: TargetSubscriptionConnection # INCLUDE INSTANCE NUMBER IN NAME TO ENSURE UNIQUE
-  value: $(AppName)-connector-$(Env)-$(InstanceNumber)
+  value: $(AppName)-$(Env)-$(InstanceNumber)
 
-- name: DeploymentGroupName  # Name given to the dedicated Azure DevOps Pool
+- name: DeploymentGroupName  # NAME FOR THE AGENT POOL - USE 'AZURE PIPELINES' FOR HOSTED AGENT AND CUSTOM NAME FOR SELF HOSTED
   value: Azure Pipelines
 
 - name: SubscriptionId
-  value: 12bbf939-9ba0-4884-9ddd-9ec927313a9c
+  value: [REPLACE]
 
 - name: TenantId
-  value: 16b3c013-d300-468d-ac64-7eda0820b6d3
+  value: [REPLACE]
 
 - name: TargetRegion
-  value: eastus2
+  value: [REPLACE]
 
 - name: AdoServicePrincipalId
-  value: 85a63baf-d111-4fbe-babe-9cd614aa2f10
+  value: [REPLACE]
 
 - name: AdoServicePrincipalObjectId
-  value: be72e938-2ed3-40d5-acfe-b1d1a0787c9b
+  value: [REPLACE]
 
 - name: AdoOrganizationName
-  value: LeadingEdgeDelivery
+  value: [REPLACE]
 
 - name: AdoProjectName
-  value: BURP
+  value: [REPLACE]
 
 - name: RepoUrl  # URL to repo that contains the pipeline that will be published
   value: https://$(AdoOrganizationName)@dev.azure.com/$(AdoOrganizationName)/$(AdoProjectName)/_git/$(AdoProjectName)
 
 - name: PipelineName  # URL to repo that contains the pipeline that will be published
-  value: microsoft.burp
+  value: $(AppName)-PipelineMain
 
 - name: BranchName  # Default branch to use for startup pipeline
   value: main
-
-- name: TargetRegion
-  value: centralus  
 
 # resource names
 # follows https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming

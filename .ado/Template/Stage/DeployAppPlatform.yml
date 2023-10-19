@@ -28,7 +28,7 @@ stages:
           #   stepList: []
           # ${{ if eq(variables.SomeVar, 'true') }}:
           #   stepList: []          
-          stepList: [
+          stepList: [                
             {
               template: "/.ado/Template/Step/Shared/sample.yml"
             }

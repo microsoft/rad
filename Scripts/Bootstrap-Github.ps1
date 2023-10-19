@@ -73,18 +73,18 @@ param (
     [string]
     $AzureKeyVaultRoleDefinitionName = "Key Vault Administrator",
 
-    # Local path of certificate policy json file
-    # Example: "C:\git\led\LeadingEdgeDelivery\Certificates"
-    [Parameter(
-        Mandatory = $false)]
-    [string]
-    $LocalCertificatePolicyPath = "$PSScriptRoot\..\Certificates\cert_policy.json",
+    # # Local path of certificate policy json file
+    # # Example: "C:\git\led\LeadingEdgeDelivery\Certificates"
+    # [Parameter(
+    #     Mandatory = $false)]
+    # [string]
+    # $LocalCertificatePolicyPath = "$PSScriptRoot\..\Certificates\cert_policy.json",
 
-    # Aks Certificate Name
-    # Example: "AksCert"
-    [Parameter(mandatory = $false)]
-    [string]
-    $AksCertName = "AksCert",
+    # # Aks Certificate Name
+    # # Example: "AksCert"
+    # [Parameter(mandatory = $false)]
+    # [string]
+    # $AksCertName = "AksCert",
 
     # Scope defined for Azure Role Assignment
     # Example: "ResourceGroup | Subscription"
@@ -309,21 +309,6 @@ if ($null -eq $nsg) {
 }
 
 ###################################################################################
-# CREATE APP GATEWAY NETWORK NSG
-###################################################################################
-$nsgAppGwName = "nsg-AppGw-$($gh["AppName"])-$($gh["InstanceNumber"])"
-Write-Host "Checking Network Security Group for Application Gateway ..."
-$nsg = Get-AzNetworkSecurityGroup -Name $nsgAppGwName -ResourceGroupName $gh["TargetResourceGroupCore"] -ErrorAction SilentlyContinue
-
-if ($null -eq $nsg) {
-    Write-Host "`tNo Network Security Group found with name '$($nsgAppGwName)' in resource group '$($gh["TargetResourceGroupCore"])'. Creating a new one ..."
-    $result = New-AzResourceGroupDeployment -Name "deploySpokeNsg" -ResourceGroupName $gh["TargetResourceGroupCore"] -TemplateFile ../ARM/NetworkSecurityGroups/deploy.json -TemplateParameterFile ../Parameters/NetworkSecurityGroups/parametersAppGw.json -networkSecurityGroupName $nsgAppGwName
-    Write-Host "`tNetwork Security Group '$($nsgAppGwName)' created successfully."
-} else {
-    Write-Host "`tNetwork Security Group '$nsgAppGwName' already exists." -ForegroundColor Yellow
-}
-
-###################################################################################
 # CREATE BASTION NETWORK NSG
 ###################################################################################
 $gh["NetworkSecurityGroupNameBastion"] = "nsg-Bastion-$($gh["AppName"])-$($gh["InstanceNumber"])"
@@ -351,7 +336,7 @@ if ($null -eq $vnet) {
         # UPDATE ADO PARAMETERS FILE
         Write-Host "`tUpdating Spoke Virtual Network parameters file."
         Copy-Item -Path ..\Parameters\VirtualNetwork\parametersSpoke.json ..\Parameters\VirtualNetwork\parametersSpoke-temp.json
-        ./Update-ParamFile.ps1 -ParametersFile ..\Parameters\VirtualNetwork\parametersSpoke-temp.json -VariablesFile ..\.github\Variables\Variables-$($gh['Env']).env        
+        ./Update-ParamFile.ps1 -ParametersFile ..\Parameters\VirtualNetwork\parametersSpoke-temp.json -VariablesFile ..\.github\Variables\Variables-$($gh['parameterRingN']).env        
         $result = New-AzResourceGroupDeployment -Name "deploySpokeVnet" -ResourceGroupName $gh['TargetResourceGroupCore'] -TemplateFile ../ARM/VirtualNetwork/deploy.json -TemplateParameterFile ../Parameters/VirtualNetwork/parametersSpoke-temp.json -vnetName $gh['SpokeVnetName']
         Remove-Item -Path ..\Parameters\VirtualNetwork\parametersSpoke-temp.json
         Write-Host "`tSpoke Virtual Network created successfully."

@@ -36,6 +36,7 @@ parameters:
     - ring1
     - ring2
     - ring3
+    - test
 
 variables:
   - template: /.ado/Template/Variable/Variables-Core.yml

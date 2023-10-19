@@ -39,8 +39,11 @@ variables:
 - name: AdoProjectName
   value: [REPLACE]
 
+- name: AdoRepoName
+  value: [REPLACE]
+
 - name: RepoUrl  # URL to repo that contains the pipeline that will be published
-  value: https://$(AdoOrganizationName)@dev.azure.com/$(AdoOrganizationName)/$(AdoProjectName)/_git/$(AdoProjectName)
+  value: https://$(AdoOrganizationName)@dev.azure.com/$(AdoOrganizationName)/$(AdoProjectName)/_git/$(AdoRepoName)
 
 - name: PipelineName  # URL to repo that contains the pipeline that will be published
   value: $(AppName)-PipelineMain

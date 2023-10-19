@@ -28,10 +28,7 @@ stages:
           #   stepList: []
           # ${{ if eq(variables.SomeVar, 'true') }}:
           #   stepList: []          
-          stepList: [      
-            {
-              template: "/.ado/Template/Step/Shared/checkout.yml"
-            },
+          stepList: [        
             {
               template: "/.ado/Template/Step/Test/app.deploy-scan.yml"
             }
@@ -55,12 +52,9 @@ stages:
           #   stepList: []
           # ${{ if eq(variables.SomeVar, 'true') }}:
           #   stepList: []          
-          stepList: [
+          stepList: [           
             {
               template: "/.ado/Template/Step/Shared/sample.yml"
-            },
-            {
-              template: "/.ado/Template/Step/Build/app.build.app1.yml"
             }
           ] 
 

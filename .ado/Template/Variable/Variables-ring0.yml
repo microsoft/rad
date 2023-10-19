@@ -1,52 +1,52 @@
 variables:
 
 - name: AppName
-  value: testapp
+  value: [REPLACE]
 
 - name: Env
   value: ring0
 
 - name: InstanceNumber
-  value: 01
+  value: 1
+
+- name: parameterRingN
+  value: ring0
 
 - name: TargetSubscriptionConnection # INCLUDE INSTANCE NUMBER IN NAME TO ENSURE UNIQUE
-  value: $(AppName)-connector-$(Env)-$(InstanceNumber)
+  value: $(AppName)-$(Env)-$(InstanceNumber)
 
-- name: DeploymentGroupName  # Name given to the dedicated Azure DevOps Pool
+- name: DeploymentGroupName  # NAME FOR THE AGENT POOL - USE 'AZURE PIPELINES' FOR HOSTED AGENT AND CUSTOM NAME FOR SELF HOSTED
   value: Azure Pipelines
 
 - name: SubscriptionId
-  value: 12bbf939-9ba0-4884-9ddd-9ec927313a9c
+  value: [REPLACE]
 
 - name: TenantId
-  value: 16b3c013-d300-468d-ac64-7eda0820b6d3
+  value: [REPLACE]
 
 - name: TargetRegion
-  value: eastus2
+  value: [REPLACE]
 
 - name: AdoServicePrincipalId
-  value: 85a63baf-d111-4fbe-babe-9cd614aa2f10
+  value: [REPLACE]
 
 - name: AdoServicePrincipalObjectId
-  value: 8fd1c114-b4f0-4679-9606-4075a9cdaf1e
+  value: [REPLACE]
 
 - name: AdoOrganizationName
-  value: LeadingEdgeDelivery
+  value: [REPLACE]
 
 - name: AdoProjectName
-  value: BURP
+  value: [REPLACE]
 
 - name: RepoUrl  # URL to repo that contains the pipeline that will be published
   value: https://$(AdoOrganizationName)@dev.azure.com/$(AdoOrganizationName)/$(AdoProjectName)/_git/$(AdoProjectName)
 
 - name: PipelineName  # URL to repo that contains the pipeline that will be published
-  value: microsoft.burp
+  value: $(AppName)-PipelineMain
 
 - name: BranchName  # Default branch to use for startup pipeline
   value: main
-
-- name: TargetRegion
-  value: centralus  
 
 # resource names
 # follows https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
@@ -63,12 +63,6 @@ variables:
 - name: KeyVaultName
   value: kv-$(AppName)-$(Env)-$(InstanceNumber)
 
-# Uses Access Policy for security
-# This keyvault exists to support the app service deployment use case
-# which requires access policies and not RBAC. See /docs/MustRead.md in the wiki for more info
-- name: KeyVaultName2
-  value: kv2-$(AppName)-$(Env)-$(InstanceNumber)
-
 - name: HubVnetName
   value: vnet-hub-$(TargetRegion)-$(InstanceNumber)
 
@@ -84,25 +78,10 @@ variables:
 - name: kvDnsZoneName
   value: privatelink.vaultcore.azure.net
 
-- name: ACRName
-  value: cr$(lowerAppName)$(lowerEnv)$(InstanceNumber)  # Must be lower case, or ACR push fails
-
 - name: KVPrivateEndpointName
   value: $(AppName)-kv-endpoint
-
-- name: KV2PrivateEndpointName
-  value: $(AppName)-kv2-endpoint
-
-- name: ACRPrivateEndPointName
-  value: $(AppName)-ACR-endpoint  
-
-- name: ACRPrivateDnsZoneName
-  value: privatelink.azurecr.io
   
 # Computed variables (likely no need to change these)
-
-- name: ACRNameString
-  value: '{"loginServer":"$(ACRName).azurecr.io", "id" : "/subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.ContainerRegistry/registries/$(ACRName)"}'
 
 - name: PrivateEndpointTargetSubnetId
   value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.Network/virtualNetworks/$(SpokeVnetName)/subnets/snet-privep-001
@@ -110,20 +89,8 @@ variables:
 - name: KVPrivateEndpointPrivateDNSId
   value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net
 
-- name: ACRPrivateEndpointPrivateDNSId
-  value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.Network/privateDnsZones/privatelink.azurecr.io
-
 - name: KVPrivateEndpointServiceResourceId
   value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.KeyVault/vaults/$(KeyVaultName)
-
-- name: KV2PrivateEndpointServiceResourceId
-  value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.KeyVault/vaults/$(KeyVaultName2)
-
-- name: ACRPrivateEndpointServiceResourceId
-  value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.ContainerRegistry/registries/$(ACRName)
-
-- name: AksVnetSubnetId
-  value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.Network/virtualNetworks/$(SpokeVnetName)/subnets/snet-aks-001
 
 - name: SubscriptionScope
   value: /subscriptions/$(SubscriptionId)

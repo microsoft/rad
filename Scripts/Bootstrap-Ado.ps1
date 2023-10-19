@@ -200,12 +200,12 @@ if($vars['AdoServicePrincipalId']) {
         }
     }
     else {
-        if ($null -eq $env:ClientSecret){
+        if ($null -eq $ENV:CLIENT_SECRET){
             $ServicePrincipalCredPrompt = "`tProvide the Client Secret for App Registration: $($ServicePrincipalAppId)"
             $ClientSecret = $(Read-Host -Prompt "$($ServicePrincipalCredPrompt)" -MaskInput)
         }
         else{
-            $ClientSecret = $env:ClientSecret
+            $ClientSecret = $ENV:CLIENT_SECRET
         }
     }
 
@@ -339,7 +339,7 @@ if ($null -eq $vnet) {
     # UPDATE ADO PARAMETERS FILE
     Write-Host "`tUpdating Spoke Virtual Network parameters file."
     Copy-Item -Path ..\Parameters\VirtualNetwork\parametersSpoke.json ..\Parameters\VirtualNetwork\parametersSpoke-temp.json
-    ./Update-ParamFile.ps1 -ParametersFile ..\Parameters\VirtualNetwork\parametersSpoke-temp.json -VariablesFile ..\.ado\Template\Variable\Variables-$($vars['Env']).yml
+    ./Update-ParamFile.ps1 -ParametersFile ..\Parameters\VirtualNetwork\parametersSpoke-temp.json -VariablesFile ..\.ado\Template\Variable\Variables-$($vars['parameterRingN']).yml
 
     $result = New-AzResourceGroupDeployment -Name "deploySpokeVnet" -ResourceGroupName $vars['TargetResourceGroupCore'] -TemplateFile ../ARM/VirtualNetwork/deploy.json -TemplateParameterFile ../Parameters/VirtualNetwork/parametersSpoke-temp.json -vnetName $vars['SpokeVnetName']
     Remove-Item -Path ..\Parameters\VirtualNetwork\parametersSpoke-temp.json
@@ -365,7 +365,7 @@ if ($null -eq $vnet) {
         # UPDATE ADO PARAMETERS FILE
         Write-Host "`tUpdating Spoke VNet Parameters file."
         Copy-Item -Path ..\Parameters\VirtualNetwork\parametersSpoke.json ..\Parameters\VirtualNetwork\parametersSpoke-temp.json
-        ./Update-ParamFile.ps1 -ParametersFile ..\Parameters\VirtualNetwork\parametersSpoke-temp.json -VariablesFile ..\.ado\Template\Variable\Variables-$($vars['Env']).yml
+        ./Update-ParamFile.ps1 -ParametersFile ..\Parameters\VirtualNetwork\parametersSpoke-temp.json -VariablesFile ..\.ado\Template\Variable\Variables-$($vars['parameterRingN']).yml
 
         $result = $null
         $newAzResourceGroupDeploymentParameters = @{
@@ -489,7 +489,7 @@ if ($null -eq $result) {
     # UPDATE ADO PARAMETERS FILE
     Write-Host "`tUpdating Virtual Machine Scale Set parameters file."
     Copy-Item -Path ..\Parameters\VirtualMachineScaleSets\ado.parameters.json ..\Parameters\VirtualMachineScaleSets\ado.parameters-temp.json
-    ./Update-ParamFile.ps1 -ParametersFile ..\Parameters\VirtualMachineScaleSets\ado.parameters-temp.json -VariablesFile ..\.ado\Template\Variable\Variables-$($vars['Env']).yml
+    ./Update-ParamFile.ps1 -ParametersFile ..\Parameters\VirtualMachineScaleSets\ado.parameters-temp.json -VariablesFile ..\.ado\Template\Variable\Variables-$($vars['parameterRingN']).yml
 
     $content = Get-Content -Path ./ConfigureAdo.sh -AsByteStream
     $linuxConfigScript = [convert]::ToBase64String($content)

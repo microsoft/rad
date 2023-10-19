@@ -7,11 +7,8 @@ BeforeDiscovery {
     $fileLeaf = (Split-Path -Path $File -Leaf)
     
     $edgeCases = @{ 
-        "New-AzureDevOpsServicePrincipalAndConnector.ps1" = "PSAvoidUsingConvertToSecureStringWithPlainText";
-        "New-AgCert.ps1" = "PSAvoidUsingConvertToSecureStringWithPlainText"
-        "Bootstrap.ps1" = "PSAvoidUsingConvertToSecureStringWithPlainText"
-        "New-ApimCert.ps1" = "PSAvoidUsingConvertToSecureStringWithPlainText"
-        "Set-APIMCustomDomain.ps1" = "PSAvoidUsingConvertToSecureStringWithPlainText"
+        "Bootstrap-Ado.ps1" = "PSAvoidUsingConvertToSecureStringWithPlainText"
+        "Bootstrap-Github.ps1" = "PSAvoidUsingConvertToSecureStringWithPlainText"        
     }
     
     if($edgeCases.keys.Contains($fileLeaf))

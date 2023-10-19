@@ -1,9 +1,5 @@
 steps:
-- checkout: git://ADO-Boot-Slim/ADO-Boot-Slim
-  clean: true
-  fetchDepth: 1
-
-- checkout: git://ADO-Boot-Slim/TestRepo
+- checkout: self
   clean: true
   fetchDepth: 1
 

@@ -36,6 +36,7 @@ parameters:
     - ring1
     - ring2
     - ring3
+    - test
 
 variables:
   - template: /.ado/Template/Variable/Variables-Core.yml
@@ -48,7 +49,8 @@ variables:
     - template: /.ado/Template/Variable/Variables-ring2.yml    
   - ${{ if eq(parameters.Ring, 'ring3' )}}:
     - template: /.ado/Template/Variable/Variables-ring3.yml
-
+  - ${{ if eq(parameters.Ring, 'test' )}}:
+    - template: /.ado/Template/Variable/Variables-test.yml
 stages:
 
 # STAGE - CREATE ARTIFACTS
@@ -62,7 +64,7 @@ stages:
     poolName: "${{variables.DeploymentGroupName}}"
     varList: [
       {
-        name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+        name: "/.ado/Template/Variable/Variables-${{variables.parameterRingN}}.yml"
       }
     ]
 
@@ -79,7 +81,7 @@ stages:
       poolName: "${{variables.DeploymentGroupName}}"
       varList: [
         {
-          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+          name: "/.ado/Template/Variable/Variables-${{variables.parameterRingN}}.yml"
         }
       ]
 
@@ -96,7 +98,7 @@ stages:
       poolName: "${{variables.DeploymentGroupName}}"
       varList: [
         {
-          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+          name: "/.ado/Template/Variable/Variables-${{variables.parameterRingN}}.yml"
         }
       ]
 
@@ -113,7 +115,7 @@ stages:
       poolName: "${{variables.DeploymentGroupName}}"
       varList: [
         {
-          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+          name: "/.ado/Template/Variable/Variables-${{variables.parameterRingN}}.yml"
         }
       ]
 
@@ -130,7 +132,7 @@ stages:
       poolName: "${{variables.DeploymentGroupName}}"
       varList: [
         {
-          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+          name: "/.ado/Template/Variable/Variables-${{variables.parameterRingN}}.yml"
         }
       ]
 
@@ -147,6 +149,6 @@ stages:
       poolName: "${{variables.DeploymentGroupName}}"    
       varList: [
         {
-          name: "/.ado/Template/Variable/Variables-${{variables.Env}}.yml"
+          name: "/.ado/Template/Variable/Variables-${{variables.parameterRingN}}.yml"
         }
       ]

@@ -5,27 +5,27 @@ parameters:
  - name: DeployInfraCore
    displayName: Deploy Core Infra
    type: boolean
-   default: false
+   default: true
 
  - name: DeployInfraRing
    displayName: Deploy Ring Infra
    type: boolean
-   default: false
+   default: true
 
  - name: DeployAppPlatform
    displayName: Deploy App Platform
    type: boolean
-   default: false
+   default: true
 
  - name: BuildApp
    displayName: Build Apps
    type: boolean
-   default: false
+   default: true
 
  - name: DeployApp
    displayName: Deploy Apps
    type: boolean
-   default: false
+   default: true
 
  - name: Ring
    displayName: Target Ring

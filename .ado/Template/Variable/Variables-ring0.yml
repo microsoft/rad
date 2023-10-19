@@ -1,7 +1,7 @@
 variables:
 
 - name: AppName
-  value: [REPLACE]
+  value: testapp
 
 - name: Env
   value: ring0
@@ -13,37 +13,37 @@ variables:
   value: $(AppName)-connector-$(Env)-$(InstanceNumber)
 
 - name: DeploymentGroupName  # Name given to the dedicated Azure DevOps Pool
-  value: $(AppName)$(Env)$(InstanceNumber)
+  value: Azure Pipelines
 
 - name: SubscriptionId
-  value: [REPLACE]
+  value: 12bbf939-9ba0-4884-9ddd-9ec927313a9c
 
 - name: TenantId
-  value: [REPLACE]
+  value: 16b3c013-d300-468d-ac64-7eda0820b6d3
 
 - name: TargetRegion
   value: eastus2
 
 - name: AdoServicePrincipalId
-  value: [REPLACE]
+  value: 85a63baf-d111-4fbe-babe-9cd614aa2f10
 
 - name: AdoServicePrincipalObjectId
-  value: [REPLACE]
+  value: 8fd1c114-b4f0-4679-9606-4075a9cdaf1e
 
 - name: AdoOrganizationName
-  value: [REPLACE]
+  value: LeadingEdgeDelivery
 
 - name: AdoProjectName
-  value: [REPLACE]
+  value: BURP
 
 - name: RepoUrl  # URL to repo that contains the pipeline that will be published
   value: https://$(AdoOrganizationName)@dev.azure.com/$(AdoOrganizationName)/$(AdoProjectName)/_git/$(AdoProjectName)
 
 - name: PipelineName  # URL to repo that contains the pipeline that will be published
-  value: main-$(AppName)-$(Env)-$(InstanceNumber)
+  value: microsoft.burp
 
 - name: BranchName  # Default branch to use for startup pipeline
-  value: master
+  value: main
 
 - name: TargetRegion
   value: centralus  

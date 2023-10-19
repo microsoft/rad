@@ -31,5 +31,8 @@ stages:
           stepList: [
             {
               template: "/.ado/Template/Step/InfraCore/infra.deploy.core.yml"
+            },
+            {
+              template: "/.ado/Template/Step/InfraCore/infra.deploy.whatever.yml"
             }
           ]

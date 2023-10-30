@@ -30,4 +30,4 @@ There are two standard job templates that are referenced in the stages file and 
 
 # GitHub Actions Asset
 
-The GitHub Actions pipeline is in development and will be located in the .github folder.
+The GitHub Actions pipeline is in development and will be located in the .github folder.  

@@ -1,27 +1,26 @@
 steps:
+  - task: DockerCompose@0
+    name: BuildNodeApiContainerImage
+    displayName: Docker-Compose Build Node Api Container Image
+    inputs:
+      containerregistrytype: "Azure Container Registry"
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      azureContainerRegistry: "$(ACRNameString)"
+      dockerComposeFile: "$(Agent.BuildDirectory)/drop/src/node-api-microservice/src/docker-compose-node-api-build.yml"
+      action: "Build services"
+      arguments: >
+        --build-arg PORT=$(node-api-port) 
+        --build-arg VER=$(node-api-version) 
+        --build-arg APPI_KEY=$(AppInsightsInstrumentationKey)
+      additionalImageTags: "$(Build.BuildId)"
 
-- task: DockerCompose@0
-  name: BuildNodeApiContainerImage
-  displayName: Docker-Compose Build Node Api Container Image
-  inputs:
-    containerregistrytype: 'Azure Container Registry'
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    azureContainerRegistry: '$(ACRNameString)'
-    dockerComposeFile: '$(Agent.BuildDirectory)/drop/src/node-api-microservice/src/docker-compose-node-api-build.yml'
-    action: 'Build services'
-    arguments: >
-      --build-arg PORT=$(node-api-port) 
-      --build-arg VER=$(node-api-version) 
-      --build-arg APPI_KEY=$(AppInsightsInstrumentationKey)
-    additionalImageTags: '$(Build.BuildId)'
-    
-- task: DockerCompose@0
-  name: PushNodeApiContainerImage
-  displayName: Docker-Compose Push Node Api Container Image
-  inputs:
-    containerregistrytype: 'Azure Container Registry'
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    azureContainerRegistry: '$(ACRNameString)'
-    dockerComposeFile: '$(Agent.BuildDirectory)/drop/src/node-api-microservice/src/docker-compose-node-api-build.yml'
-    action: 'Push services'
-    additionalImageTags: '$(Build.BuildId)'
+  - task: DockerCompose@0
+    name: PushNodeApiContainerImage
+    displayName: Docker-Compose Push Node Api Container Image
+    inputs:
+      containerregistrytype: "Azure Container Registry"
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      azureContainerRegistry: "$(ACRNameString)"
+      dockerComposeFile: "$(Agent.BuildDirectory)/drop/src/node-api-microservice/src/docker-compose-node-api-build.yml"
+      action: "Push services"
+      additionalImageTags: "$(Build.BuildId)"

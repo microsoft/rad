@@ -1,10 +1,10 @@
 variables:
-- name: StageCoreTimeout
-  value: 0
+  - name: StageCoreTimeout
+    value: 0
 
-- name: ContinueJobsOnError
-  value: false
+  - name: ContinueJobsOnError
+    value: false
 
-# Azure Cloud Usage Attribution Id
-- name: cuaId
-  value: 301f88b3-b1de-4890-a83a-83e5bca04a37
+  # Azure Cloud Usage Attribution Id
+  - name: cuaId
+    value: 301f88b3-b1de-4890-a83a-83e5bca04a37

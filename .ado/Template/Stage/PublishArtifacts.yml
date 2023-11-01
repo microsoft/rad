@@ -9,10 +9,10 @@ parameters:
 
 stages:
   - stage: ${{ parameters.stageName }}
-    displayName: '${{ parameters.displayName }}'
+    displayName: "${{ parameters.displayName }}"
     variables:
       - ${{ each item in parameters.varList }}:
-        - template: ${{ item.Name }}
+          - template: ${{ item.Name }}
     jobs:
       - template: /.ado/Template/Job/Deployment-v1.yml
         parameters:
@@ -28,8 +28,5 @@ stages:
           #   stepList: []
           # ${{ if eq(variables.SomeVar, 'true') }}:
           #   stepList: []
-          stepList: [                     
-            {
-              template: "/.ado/Template/Step/Publish/publish.artifacts.yml"
-            }
-          ]
+          stepList:
+            [{ template: "/.ado/Template/Step/Publish/publish.artifacts.yml" }]

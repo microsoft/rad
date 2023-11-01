@@ -1,16 +1,16 @@
 steps:
-- checkout: self
-  clean: true
-  fetchDepth: 1
+  - checkout: self
+    clean: true
+    fetchDepth: 1
 
-- task: CopyFiles@2
-  displayName: 'Copy Repo Source to Artifact Staging'
-  inputs:
-    SourceFolder: '$(Agent.BuildDirectory)'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
-    Content: '**'
-    CleanTargetFolder: true
-    OverWrite: true
-  
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish build artifacts'   
+  - task: CopyFiles@2
+    displayName: "Copy Repo Source to Artifact Staging"
+    inputs:
+      SourceFolder: "$(Agent.BuildDirectory)"
+      TargetFolder: "$(Build.ArtifactStagingDirectory)"
+      Content: "**"
+      CleanTargetFolder: true
+      OverWrite: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: "Publish build artifacts"

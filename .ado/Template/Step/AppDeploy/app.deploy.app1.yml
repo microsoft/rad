@@ -1,9 +1,8 @@
 steps:
-- checkout: self
-  path: CNA
-  clean: true
-  fetchDepth: 1
-
+  - checkout: self
+    path: CNA
+    clean: true
+    fetchDepth: 1
 # - task: PowerShell@2
 #   name: UpdateAppConfig
 #   displayName: Update Kube Config and App Service Deployment Files
@@ -11,14 +10,14 @@ steps:
 #     filePath: 'Scripts/Update-TemplateText.ps1'
 #     arguments: >
 #       -FileList @(
-#         "src\docker-compose-votingapp.yml", 
-#         "src\azure-vote-all-in-one-redis.yaml", 
+#         "src\docker-compose-votingapp.yml",
+#         "src\azure-vote-all-in-one-redis.yaml",
 #         "src\node-api-deploy.yml",
 #         "src\node-api-microservice\src\docker-compose-node-api-app-service.yml",
 #         "src\tel-ms-deploy.yml"
-#       ) 
+#       )
 #       -ReplacementList @{
-#         "[[ACRLoginServer]]" = "$(ACRName).azurecr.io"; 
+#         "[[ACRLoginServer]]" = "$(ACRName).azurecr.io";
 #         "[[IngressCertName]]" = "$(AksIngressCertSecretName)"
 #       }
 
@@ -31,9 +30,9 @@ steps:
 #     scriptLocation: 'scriptPath'
 #     scriptPath: 'Scripts/Get-AksCert.ps1'
 #     arguments: >
-#       -KeyVaultName $(KeyVaultName) 
+#       -KeyVaultName $(KeyVaultName)
 #       -CertName $(AGICCertName)
-#       -CrtPath $(AGICCrtPath) 
+#       -CrtPath $(AGICCrtPath)
 #       -KeyPath $(AGICKeyPath)
 
 # - task: AzureCLI@2
@@ -45,9 +44,9 @@ steps:
 #     scriptLocation: 'scriptPath'
 #     scriptPath: 'Scripts/New-AksTlsSecretYml.ps1'
 #     arguments: >
-#       -SecretName $(AksIngressCertSecretName) 
-#       -KeyPath $(AGICKeyPath) 
-#       -CrtPath $(AGICCrtPath) 
+#       -SecretName $(AksIngressCertSecretName)
+#       -KeyPath $(AGICKeyPath)
+#       -CrtPath $(AGICCrtPath)
 #       -OutputPath $(Build.SourcesDirectory)/cert.yml
 
 # - task: AzureCLI@2
@@ -59,13 +58,13 @@ steps:
 #     scriptLocation: 'scriptPath'
 #     scriptPath: 'Scripts/Invoke-Kubectl.ps1'
 #     arguments: >
-#       -ResourceGroupName $(TargetResourceGroupCore) 
-#       -AKSName $(AksName) 
+#       -ResourceGroupName $(TargetResourceGroupCore)
+#       -AKSName $(AksName)
 #       -CommandOptions @(
-#         "apply", 
-#         "-f", 
+#         "apply",
+#         "-f",
 #         "$(Build.SourcesDirectory)/cert.yml"
-#       )  
+#       )
 
 # - task: AzureCLI@2
 #   displayName: Deploy Voting App to AKS
@@ -76,11 +75,11 @@ steps:
 #     scriptLocation: 'scriptPath'
 #     scriptPath: 'Scripts/Invoke-Kubectl.ps1'
 #     arguments: >
-#       -ResourceGroupName $(TargetResourceGroupCore) 
-#       -AKSName $(AksName) 
+#       -ResourceGroupName $(TargetResourceGroupCore)
+#       -AKSName $(AksName)
 #       -CommandOptions @(
-#         "apply", 
-#         "-f", 
+#         "apply",
+#         "-f",
 #         "$(System.DefaultWorkingDirectory)/src/azure-vote-all-in-one-redis.yaml"
 #       )
 
@@ -93,10 +92,10 @@ steps:
 #     scriptLocation: 'scriptPath'
 #     scriptPath: 'Scripts/Invoke-Kubectl.ps1'
 #     arguments: >
-#       -ResourceGroupName $(TargetResourceGroupCore) 
-#       -AKSName $(AksName) 
+#       -ResourceGroupName $(TargetResourceGroupCore)
+#       -AKSName $(AksName)
 #       -CommandOptions @(
-#         "apply", 
-#         "-f", 
+#         "apply",
+#         "-f",
 #         "$(System.DefaultWorkingDirectory)/src/node-api-deploy.yml"
 #       )

@@ -1,80 +1,79 @@
 steps:
+  - task: AzurePowerShell@5
+    name: UpdateDNSParameterFile_STOR
+    displayName: "Update Private DNS Zones Parameters File"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      ScriptType: "FilePath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1"
+      ScriptArguments: "-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json"
+      azurePowerShellVersion: "LatestVersion"
 
-- task: AzurePowerShell@5
-  name: UpdateDNSParameterFile_STOR
-  displayName: "Update Private DNS Zones Parameters File"
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
-    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
-    azurePowerShellVersion: 'LatestVersion'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Deploy Blob Private DNS Zone"
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/PrivateDnsZones/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json"
+      overrideParameters: >
+        -privateDnsZoneName $(blobDnsZoneName)
+        -cuaId $(cuaId)
+      deploymentMode: "Incremental"
+      deploymentName: "deployBlobPrivateDnsZone-$(Build.BuildNumber)"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Deploy Blob Private DNS Zone'
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateDnsZones/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
-    overrideParameters: >
-      -privateDnsZoneName $(blobDnsZoneName)
-      -cuaId $(cuaId)
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployBlobPrivateDnsZone-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Create Storage Account"
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/StorageAccounts/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/StorageAccounts/parameters.json"
+      overrideParameters: >
+        -storageAccountName $(storageAccountName)
+        -cuaId $(cuaId)
+      deploymentMode: "Incremental"
+      deploymentName: "deployStorageAccount-$(Build.BuildNumber)"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Create Storage Account'
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/StorageAccounts/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/StorageAccounts/parameters.json'
-    overrideParameters: >
-     -storageAccountName $(storageAccountName)
-     -cuaId $(cuaId)
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployStorageAccount-$(Build.BuildNumber)'
+  - task: AzurePowerShell@5
+    displayName: "Set Storage Account ACL"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      ScriptType: "FilePath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Set-StorageAccountACL.ps1"
+      ScriptArguments: >
+        -coreStorageAccount $(storageAccountName) -ResourceGroupName $(TargetResourceGroupCore)
+      azurePowerShellVersion: "LatestVersion"
 
-- task: AzurePowerShell@5
-  displayName: "Set Storage Account ACL"
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Set-StorageAccountACL.ps1'
-    ScriptArguments: >
-      -coreStorageAccount $(storageAccountName) -ResourceGroupName $(TargetResourceGroupCore)
-    azurePowerShellVersion: 'LatestVersion'
-
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Deploy Storage Account Private Endpoints'
-  inputs:
-    deploymentScope: 'Resource Group'
-    dependsOn: 'Deploy Blob Private DNS Zone'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateEndpoints/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateEndpoints/parameters.json'
-    overrideParameters: >
-      -privateEndpointName $(BlobPrivateEndPointName)
-      -targetSubnetId $(PrivateEndpointTargetSubnetId)
-      -privateDNSId $(StorageAccountPrivateEndpointPrivateDNSId)
-      -serviceResourceId $(StorageAccountPrivateEndpointServiceResourceId)
-      -groupId ["blob"]
-      -cuaId $(cuaId)
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployStorageAccountPrivateEndpoints-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Deploy Storage Account Private Endpoints"
+    inputs:
+      deploymentScope: "Resource Group"
+      dependsOn: "Deploy Blob Private DNS Zone"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/PrivateEndpoints/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateEndpoints/parameters.json"
+      overrideParameters: >
+        -privateEndpointName $(BlobPrivateEndPointName)
+        -targetSubnetId $(PrivateEndpointTargetSubnetId)
+        -privateDNSId $(StorageAccountPrivateEndpointPrivateDNSId)
+        -serviceResourceId $(StorageAccountPrivateEndpointServiceResourceId)
+        -groupId ["blob"]
+        -cuaId $(cuaId)
+      deploymentMode: "Incremental"
+      deploymentName: "deployStorageAccountPrivateEndpoints-$(Build.BuildNumber)"

@@ -1,87 +1,86 @@
 steps:
+  - task: AzurePowerShell@5
+    name: UpdateDNSParameterFile_STOR
+    displayName: "Update Private DNS Zones Parameters File"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      ScriptType: "FilePath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1"
+      ScriptArguments: "-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json"
+      azurePowerShellVersion: "LatestVersion"
 
-- task: AzurePowerShell@5
-  name: UpdateDNSParameterFile_STOR
-  displayName: "Update Private DNS Zones Parameters File"
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
-    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
-    azurePowerShellVersion: 'LatestVersion'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Create Cosmos DB"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/CosmosDB/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/CosmosDB/parameters.json"
+      overrideParameters: >
+        -name $(CosmosDBName)
+        -location $(TargetRegion)
+        -locationName $(TargetRegion)
+        -cuaId $(cuaId)
+      deploymentMode: "Incremental"
+      deploymentName: "deployCosmosDB-$(Build.BuildNumber)"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Create Cosmos DB'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/CosmosDB/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/CosmosDB/parameters.json'
-    overrideParameters: >
-      -name $(CosmosDBName)
-      -location $(TargetRegion)
-      -locationName $(TargetRegion)
-      -cuaId $(cuaId)
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployCosmosDB-$(Build.BuildNumber)'
+  - task: AzureCLI@2
+    displayName: CreateDocumentCollection
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Create-CosmosDB-DocumentStore.ps1"
+      arguments: >
+        -ResourceGroupName $(TargetResourceGroupCore) 
+        -CosmosDBAccountName $(CosmosDBName)
+        -CosmosDBDatabaseName $(CosmosDBDatabaseName)
+        -CosmosDBCollectionName $(CosmosDBCollectionName)
 
-- task: AzureCLI@2
-  displayName: CreateDocumentCollection
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    scriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Create-CosmosDB-DocumentStore.ps1'
-    arguments: >
-      -ResourceGroupName $(TargetResourceGroupCore) 
-      -CosmosDBAccountName $(CosmosDBName)
-      -CosmosDBDatabaseName $(CosmosDBDatabaseName)
-      -CosmosDBCollectionName $(CosmosDBCollectionName)
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Deploy Mongo Cosmos Private DNS Zone"
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/PrivateDnsZones/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json"
+      overrideParameters: >
+        -privateDnsZoneName $(mongoCosmosPrivateDnsZoneName)
+        -cuaId $(cuaId)
+      deploymentMode: "Incremental"
+      deploymentName: "deployCosmosDBPrivateDnsZones-$(Build.BuildNumber)"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Deploy Mongo Cosmos Private DNS Zone'
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateDnsZones/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateDnsZones/parameters.json'
-    overrideParameters: >
-      -privateDnsZoneName $(mongoCosmosPrivateDnsZoneName)
-      -cuaId $(cuaId)
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployCosmosDBPrivateDnsZones-$(Build.BuildNumber)'
-
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Deploy Mongo Cosmos Private Endpoints'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    dependsOn: 'Deploy Mongo Cosmos Private DNS Zone'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/PrivateEndpoints/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateEndpoints/parameters.json'
-    overrideParameters: >
-      -privateEndpointName $(MongoCosmosPrivateEndPointName)
-      -targetSubnetId $(PrivateEndpointTargetSubnetId)
-      -privateDNSId $(MongoCosmosPrivateEndpointPrivateDNSId)
-      -serviceResourceId $(MongoCosmosPrivateEndpointServiceResourceId)
-      -groupId ["MongoDB"]
-      -cuaId $(cuaId)
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployMongoCosmosPrivateEndpoints-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Deploy Mongo Cosmos Private Endpoints"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      dependsOn: "Deploy Mongo Cosmos Private DNS Zone"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/PrivateEndpoints/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/PrivateEndpoints/parameters.json"
+      overrideParameters: >
+        -privateEndpointName $(MongoCosmosPrivateEndPointName)
+        -targetSubnetId $(PrivateEndpointTargetSubnetId)
+        -privateDNSId $(MongoCosmosPrivateEndpointPrivateDNSId)
+        -serviceResourceId $(MongoCosmosPrivateEndpointServiceResourceId)
+        -groupId ["MongoDB"]
+        -cuaId $(cuaId)
+      deploymentMode: "Incremental"
+      deploymentName: "deployMongoCosmosPrivateEndpoints-$(Build.BuildNumber)"

@@ -1,38 +1,38 @@
 steps:
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate Virtual Network Hub Deployment'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/VirtualNetwork/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersHub.json'
-    overrideParameters: >
-      -vNetName $(HubVnetName)
-      -cuaId $(cuaId)
-    deploymentMode: 'Validation'
-    deploymentName: 'deployVirtualNetworkHub-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate Virtual Network Hub Deployment"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/VirtualNetwork/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersHub.json"
+      overrideParameters: >
+        -vNetName $(HubVnetName)
+        -cuaId $(cuaId)
+      deploymentMode: "Validation"
+      deploymentName: "deployVirtualNetworkHub-$(Build.BuildNumber)"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate Virtual Network Spoke Deployment'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/VirtualNetwork/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersSpoke.json'
-    overrideParameters: >
-      -vNetName $(SpokeVnetName)
-      -cuaId $(cuaId)
-    deploymentMode: 'Validation'
-    deploymentName: 'deployVirtualNetworkSpoke-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate Virtual Network Spoke Deployment"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/VirtualNetwork/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersSpoke.json"
+      overrideParameters: >
+        -vNetName $(SpokeVnetName)
+        -cuaId $(cuaId)
+      deploymentMode: "Validation"
+      deploymentName: "deployVirtualNetworkSpoke-$(Build.BuildNumber)"

@@ -1,24 +1,24 @@
 steps:
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate Azure Kubernetes Service Deployment'
-  condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/AzureKubernetesService/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/AzureKubernetesService/parameters.json'
-    overrideParameters: >
-      -aksClusterName $(AksName)
-      -workspaceId $(LogAWorkspaceId)
-      -vnetSubnetID $(AksVnetSubnetId)
-      -location $(TargetRegion)
-      -aadProfileAdminGroupObjectID $(SetADGroup.AksAadProfileAdminGroupObjectID)
-      -aksClusterKubernetesVersion $(AksVersion)
-      -cuaId $(cuaId)
-    deploymentMode: 'Validation'
-    deploymentName: 'deployAzureKubernetesService-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate Azure Kubernetes Service Deployment"
+    condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/AzureKubernetesService/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/AzureKubernetesService/parameters.json"
+      overrideParameters: >
+        -aksClusterName $(AksName)
+        -workspaceId $(LogAWorkspaceId)
+        -vnetSubnetID $(AksVnetSubnetId)
+        -location $(TargetRegion)
+        -aadProfileAdminGroupObjectID $(SetADGroup.AksAadProfileAdminGroupObjectID)
+        -aksClusterKubernetesVersion $(AksVersion)
+        -cuaId $(cuaId)
+      deploymentMode: "Validation"
+      deploymentName: "deployAzureKubernetesService-$(Build.BuildNumber)"

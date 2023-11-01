@@ -1,18 +1,16 @@
 steps:
-
-- task: PowerShell@2
-  name: PSScriptAnalyzerTests
-  displayName: "Test Scripts against PSScriptAnalyzer"
-  inputs:
-    filePath: '$(Agent.BuildDirectory)/drop/s/Scripts/tests/Pester-Analyze-PowerShell-Scripts.ps1'
-    workingDirectory: '$(Agent.BuildDirectory)/drop/s'
-    arguments: '-CI $true'
-
+  - task: PowerShell@2
+    name: PSScriptAnalyzerTests
+    displayName: "Test Scripts against PSScriptAnalyzer"
+    inputs:
+      filePath: "$(Agent.BuildDirectory)/drop/s/Scripts/tests/Pester-Analyze-PowerShell-Scripts.ps1"
+      workingDirectory: "$(Agent.BuildDirectory)/drop/s"
+      arguments: "-CI $true"
 # - task: NodeTool@0
 #   displayName: "Install Node on Agent"
 #   inputs:
 #     versionSpec: '14.x'
-    
+
 # - task: PowerShell@2
 #   name: NodeApiUnitTest
 #   displayName: "Mocha Unit Tests for Node-API"

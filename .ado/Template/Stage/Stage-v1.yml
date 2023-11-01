@@ -11,20 +11,20 @@ parameters:
 
 stages:
   - stage: ${{parameters.stageName}}
-    displayName: '${{parameters.displayName}}'  
+    displayName: "${{parameters.displayName}}"
     variables:
       - ${{ each item in parameters.varList }}:
-        - template: ${{item.Name}}
+          - template: ${{item.Name}}
     jobs:
       - ${{ each job in parameters.jobList }}:
-        - template: ${{job.jobTemplate}}
-          parameters:
-            jobName: ${{job.jobName}}
-            displayName: ${{job.displayName}}
-            environment: ${{job.environment}}
-            continueOnError: ${{parameters.continueJobsOnError}}
-            timeoutInMinutes: ${{parameters.stageCoreTimeout}}
-            dependsOn: ${{job.dependsOn}}
-            poolName: ${{parameters.poolName}}
-            varList: ${{parameters.varList}}
-            stepList: ${{job.stepList}}
+          - template: ${{job.jobTemplate}}
+            parameters:
+              jobName: ${{job.jobName}}
+              displayName: ${{job.displayName}}
+              environment: ${{job.environment}}
+              continueOnError: ${{parameters.continueJobsOnError}}
+              timeoutInMinutes: ${{parameters.stageCoreTimeout}}
+              dependsOn: ${{job.dependsOn}}
+              poolName: ${{parameters.poolName}}
+              varList: ${{parameters.varList}}
+              stepList: ${{job.stepList}}

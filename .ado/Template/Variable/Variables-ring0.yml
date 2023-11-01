@@ -1,109 +1,108 @@
 variables:
+  - name: AppName
+    value: [REPLACE]
 
-- name: AppName
-  value: [REPLACE]
+  - name: Env
+    value: ring0
 
-- name: Env
-  value: ring0
+  - name: InstanceNumber
+    value: 1
 
-- name: InstanceNumber
-  value: 1
+  - name: parameterRingN
+    value: ring0
 
-- name: parameterRingN
-  value: ring0
+  - name: TargetSubscriptionConnection # INCLUDE INSTANCE NUMBER IN NAME TO ENSURE UNIQUE
+    value: $(AppName)-$(Env)-$(InstanceNumber)
 
-- name: TargetSubscriptionConnection # INCLUDE INSTANCE NUMBER IN NAME TO ENSURE UNIQUE
-  value: $(AppName)-$(Env)-$(InstanceNumber)
+  - name: DeploymentGroupName # NAME FOR THE AGENT POOL - USE 'AZURE PIPELINES' FOR HOSTED AGENT AND CUSTOM NAME FOR SELF HOSTED
+    value: Azure Pipelines
 
-- name: DeploymentGroupName  # NAME FOR THE AGENT POOL - USE 'AZURE PIPELINES' FOR HOSTED AGENT AND CUSTOM NAME FOR SELF HOSTED
-  value: Azure Pipelines
+  - name: SubscriptionId
+    value: [REPLACE]
 
-- name: SubscriptionId
-  value: [REPLACE]
+  - name: TenantId
+    value: [REPLACE]
 
-- name: TenantId
-  value: [REPLACE]
+  - name: TargetRegion
+    value: [REPLACE]
 
-- name: TargetRegion
-  value: [REPLACE]
+  - name: AdoServicePrincipalId
+    value: [REPLACE]
 
-- name: AdoServicePrincipalId
-  value: [REPLACE]
+  - name: AdoServicePrincipalObjectId
+    value: [REPLACE]
 
-- name: AdoServicePrincipalObjectId
-  value: [REPLACE]
+  - name: AdoOrganizationName
+    value: [REPLACE]
 
-- name: AdoOrganizationName
-  value: [REPLACE]
+  - name: AdoProjectName
+    value: [REPLACE]
 
-- name: AdoProjectName
-  value: [REPLACE]
+  - name: AdoRepoName
+    value: [REPLACE]
 
-- name: AdoRepoName
-  value: [REPLACE]
+  - name: RepoUrl # URL to repo that contains the pipeline that will be published
+    value: https://$(AdoOrganizationName)@dev.azure.com/$(AdoOrganizationName)/$(AdoProjectName)/_git/$(AdoRepoName)
 
-- name: RepoUrl  # URL to repo that contains the pipeline that will be published
-  value: https://$(AdoOrganizationName)@dev.azure.com/$(AdoOrganizationName)/$(AdoProjectName)/_git/$(AdoRepoName)
+  - name: PipelineName # URL to repo that contains the pipeline that will be published
+    value: $(AppName)-PipelineMain
 
-- name: PipelineName  # URL to repo that contains the pipeline that will be published
-  value: $(AppName)-PipelineMain
+  - name: BranchName # Default branch to use for startup pipeline
+    value: main
 
-- name: BranchName  # Default branch to use for startup pipeline
-  value: main
+  # resource names
+  # follows https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
+  - name: lowerAppName
+    value: $[lower(variables['AppName'])]
 
-# resource names
-# follows https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
-- name: lowerAppName
-  value: $[lower(variables['AppName'])]
+  - name: lowerEnv
+    value: $[lower(variables['Env'])]
 
-- name: lowerEnv
-  value: $[lower(variables['Env'])]
+  - name: TargetResourceGroupCore
+    value: rg-$(AppName)-$(Env)-$(InstanceNumber)
 
-- name: TargetResourceGroupCore
-  value: rg-$(AppName)-$(Env)-$(InstanceNumber)
+  # Uses RBAC for security
+  - name: KeyVaultName
+    value: kv-$(AppName)-$(Env)-$(InstanceNumber)
 
-# Uses RBAC for security
-- name: KeyVaultName
-  value: kv-$(AppName)-$(Env)-$(InstanceNumber)
+  - name: HubVnetName
+    value: vnet-hub-$(TargetRegion)-$(InstanceNumber)
 
-- name: HubVnetName
-  value: vnet-hub-$(TargetRegion)-$(InstanceNumber)
+  - name: SpokeVnetName
+    value: vnet-spoke-$(TargetRegion)-$(InstanceNumber)
 
-- name: SpokeVnetName
-  value: vnet-spoke-$(TargetRegion)-$(InstanceNumber)
+  - name: NetworkSecurityGroupNameHub
+    value: nsg-Hub-$(AppName)-$(InstanceNumber)
 
-- name: NetworkSecurityGroupNameHub
-  value: nsg-Hub-$(AppName)-$(InstanceNumber)
+  - name: NetworkSecurityGroupNameSpoke
+    value: nsg-Spoke-$(AppName)-$(InstanceNumber)
 
-- name: NetworkSecurityGroupNameSpoke
-  value: nsg-Spoke-$(AppName)-$(InstanceNumber)
+  - name: kvDnsZoneName
+    value: privatelink.vaultcore.azure.net
 
-- name: kvDnsZoneName
-  value: privatelink.vaultcore.azure.net
+  - name: KVPrivateEndpointName
+    value: $(AppName)-kv-endpoint
 
-- name: KVPrivateEndpointName
-  value: $(AppName)-kv-endpoint
-  
-# Computed variables (likely no need to change these)
+  # Computed variables (likely no need to change these)
 
-- name: PrivateEndpointTargetSubnetId
-  value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.Network/virtualNetworks/$(SpokeVnetName)/subnets/snet-privep-001
+  - name: PrivateEndpointTargetSubnetId
+    value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.Network/virtualNetworks/$(SpokeVnetName)/subnets/snet-privep-001
 
-- name: KVPrivateEndpointPrivateDNSId
-  value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net
+  - name: KVPrivateEndpointPrivateDNSId
+    value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net
 
-- name: KVPrivateEndpointServiceResourceId
-  value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.KeyVault/vaults/$(KeyVaultName)
+  - name: KVPrivateEndpointServiceResourceId
+    value: /subscriptions/$(SubscriptionId)/resourceGroups/$(TargetResourceGroupCore)/providers/Microsoft.KeyVault/vaults/$(KeyVaultName)
 
-- name: SubscriptionScope
-  value: /subscriptions/$(SubscriptionId)
+  - name: SubscriptionScope
+    value: /subscriptions/$(SubscriptionId)
 
-# Paths
-- name: parametersPath
-  value: Parameters
+  # Paths
+  - name: parametersPath
+    value: Parameters
 
-- name: AppSourcePath
-  value: src
+  - name: AppSourcePath
+    value: src
 
-- name: SettingsPath
-  value: ARM/WebApp/
+  - name: SettingsPath
+    value: ARM/WebApp/

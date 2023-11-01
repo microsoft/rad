@@ -1,9 +1,8 @@
 steps:
-- checkout: self
-  path: CNA
-  clean: true
-  fetchDepth: 1
-
+  - checkout: self
+    path: CNA
+    clean: true
+    fetchDepth: 1
 # - task: AzureKeyVault@1
 #   inputs:
 #     azureSubscription: $(TargetSubscriptionConnection)
@@ -40,12 +39,12 @@ steps:
 #     arguments: >
 #       -FileList @(
 #         "src\azure-vote\azure-vote\config_file.cfg"
-#       ) 
+#       )
 #       -ReplacementList @{
-#         "[[clientId]]" = "$(clientId)"; 
-#         "[[clientSecret]]" = '$(clientSecret)'; 
+#         "[[clientId]]" = "$(clientId)";
+#         "[[clientSecret]]" = '$(clientSecret)';
 #         "[[sessionSecret]]" = '$(sessionSecret)';
-#         "[[authority]]" = "$(authority)"; 
+#         "[[authority]]" = "$(authority)";
 #         "[[ADOBuildVersion]]" = "$(Build.BuildNumber)"
 #       }
 
@@ -80,5 +79,5 @@ steps:
 #     scriptLocation: 'scriptPath'
 #     scriptPath: 'Scripts/Set-AppInsights-InstrumentationKey.ps1'
 #     arguments: >
-#       -AppInsightsName $(AppInsightsName) 
+#       -AppInsightsName $(AppInsightsName)
 #       -ResourceGroupName $(TargetResourceGroupCore)

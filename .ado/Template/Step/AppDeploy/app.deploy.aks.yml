@@ -1,118 +1,117 @@
 steps:
+  - task: PowerShell@2
+    name: UpdateAppConfig
+    displayName: Update Kube Config and App Service Deployment Files
+    inputs:
+      filePath: "$(Agent.BuildDirectory)/drop/Scripts/Update-TemplateText.ps1"
+      workingDirectory: "$(Agent.BuildDirectory)/drop"
+      arguments: >
+        -FileList @(
+          "src\docker-compose-votingapp.yml", 
+          "src\azure-vote-all-in-one-redis.yaml", 
+          "src\node-api-deploy.yml"
+        ) 
+        -ReplacementList @{
+          "[[ACRLoginServer]]" = "$(ACRName).azurecr.io"; 
+          "[[IngressCertName]]" = "$(AksIngressCertSecretName)";
+        }
 
-- task: PowerShell@2
-  name: UpdateAppConfig
-  displayName: Update Kube Config and App Service Deployment Files
-  inputs:
-    filePath: '$(Agent.BuildDirectory)/drop/Scripts/Update-TemplateText.ps1'
-    workingDirectory: '$(Agent.BuildDirectory)/drop'
-    arguments: >
-      -FileList @(
-        "src\docker-compose-votingapp.yml", 
-        "src\azure-vote-all-in-one-redis.yaml", 
-        "src\node-api-deploy.yml"
-      ) 
-      -ReplacementList @{
-        "[[ACRLoginServer]]" = "$(ACRName).azurecr.io"; 
-        "[[IngressCertName]]" = "$(AksIngressCertSecretName)";
-      }
+  - task: AzureCLI@2
+    displayName: Download AGIC Cert from Key Vault
+    condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Get-AksCert.ps1"
+      arguments: >
+        -KeyVaultName $(KeyVaultName) 
+        -CertName $(AGICCertName)
+        -CrtPath $(AGICCrtPath) 
+        -KeyPath $(AGICKeyPath)
 
-- task: AzureCLI@2
-  displayName: Download AGIC Cert from Key Vault
-  condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    scriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Get-AksCert.ps1'
-    arguments: >
-      -KeyVaultName $(KeyVaultName) 
-      -CertName $(AGICCertName)
-      -CrtPath $(AGICCrtPath) 
-      -KeyPath $(AGICKeyPath)
+  - task: AzureCLI@2
+    displayName: Author AGIC Cert Secret for AKS
+    condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/New-AksTlsSecretYml.ps1"
+      arguments: >
+        -SecretName $(AksIngressCertSecretName) 
+        -KeyPath $(AGICKeyPath) 
+        -CrtPath $(AGICCrtPath) 
+        -OutputPath $(Agent.BuildDirectory)/cert.yml
 
-- task: AzureCLI@2
-  displayName: Author AGIC Cert Secret for AKS
-  condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    scriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/New-AksTlsSecretYml.ps1'
-    arguments: >
-      -SecretName $(AksIngressCertSecretName) 
-      -KeyPath $(AGICKeyPath) 
-      -CrtPath $(AGICCrtPath) 
-      -OutputPath $(Agent.BuildDirectory)/cert.yml
+  - task: AzureCLI@2
+    displayName: Add Cert to AKS for AGIC
+    condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Invoke-Kubectl.ps1"
+      arguments: >
+        -ResourceGroupName $(TargetResourceGroupCore) 
+        -AKSName $(AksName) 
+        -CommandOptions @(
+          "apply", 
+          "-f", 
+          "$(Agent.BuildDirectory)/cert.yml"
+        )
 
-- task: AzureCLI@2
-  displayName: Add Cert to AKS for AGIC
-  condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    scriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Invoke-Kubectl.ps1'
-    arguments: >
-      -ResourceGroupName $(TargetResourceGroupCore) 
-      -AKSName $(AksName) 
-      -CommandOptions @(
-        "apply", 
-        "-f", 
-        "$(Agent.BuildDirectory)/cert.yml"
-      )  
+  - task: AzureCLI@2
+    displayName: Deploy Voting App to AKS
+    condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Invoke-Kubectl.ps1"
+      workingDirectory: "$(Agent.BuildDirectory)/drop"
+      arguments: >
+        -ResourceGroupName $(TargetResourceGroupCore) 
+        -AKSName $(AksName) 
+        -CommandOptions @(
+          "apply", 
+          "-f", 
+          "$(Agent.BuildDirectory)/drop/src/azure-vote-all-in-one-redis.yaml"
+        )
 
-- task: AzureCLI@2
-  displayName: Deploy Voting App to AKS
-  condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    scriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Invoke-Kubectl.ps1'
-    workingDirectory: '$(Agent.BuildDirectory)/drop'
-    arguments: >
-      -ResourceGroupName $(TargetResourceGroupCore) 
-      -AKSName $(AksName) 
-      -CommandOptions @(
-        "apply", 
-        "-f", 
-        "$(Agent.BuildDirectory)/drop/src/azure-vote-all-in-one-redis.yaml"
-      )
+  - task: AzureCLI@2
+    displayName: Deploy Node API Kubernetes Microservice
+    condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Invoke-Kubectl.ps1"
+      workingDirectory: "$(Agent.BuildDirectory)/drop"
+      arguments: >
+        -ResourceGroupName $(TargetResourceGroupCore) 
+        -AKSName $(AksName) 
+        -CommandOptions @(
+          "apply", 
+          "-f", 
+          "$(Agent.BuildDirectory)/drop/src/node-api-deploy.yml"
+        )
 
-- task: AzureCLI@2
-  displayName: Deploy Node API Kubernetes Microservice
-  condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    scriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Invoke-Kubectl.ps1'
-    workingDirectory: '$(Agent.BuildDirectory)/drop'
-    arguments: >
-      -ResourceGroupName $(TargetResourceGroupCore) 
-      -AKSName $(AksName) 
-      -CommandOptions @(
-        "apply", 
-        "-f", 
-        "$(Agent.BuildDirectory)/drop/src/node-api-deploy.yml"
-      )
-
-- task: AzureCLI@2
-  displayName: SetBuildVersions
-  condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    scriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Set-AksDeploymentBuildVersion.ps1'
-    workingDirectory: '$(Agent.BuildDirectory)/drop'
-    arguments: >
-      -ResourceGroupName $(TargetResourceGroupCore) 
-      -AKSName $(AksName) 
-      -BuildVersion $(Build.BuildNumber)
-      -DeploymentNames @(
-        "azure-vote-front",
-        "azure-vote-back",
-        "node-api"
-      )
+  - task: AzureCLI@2
+    displayName: SetBuildVersions
+    condition: or(eq(variables['DeploymentType'], 'AKS'), eq(variables['DeploymentType'], 'Both'))
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Set-AksDeploymentBuildVersion.ps1"
+      workingDirectory: "$(Agent.BuildDirectory)/drop"
+      arguments: >
+        -ResourceGroupName $(TargetResourceGroupCore) 
+        -AKSName $(AksName) 
+        -BuildVersion $(Build.BuildNumber)
+        -DeploymentNames @(
+          "azure-vote-front",
+          "azure-vote-back",
+          "node-api"
+        )

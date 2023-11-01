@@ -1,53 +1,52 @@
 steps:
+  - task: AzurePowerShell@5
+    name: SetADGroup
+    displayName: "AKS Admins Azure AD Group Creation and Role Assignment"
+    condition: eq(variables['SetADGroup.AksAadProfileAdminGroupObjectID'], '')
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      ScriptType: "FilePath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/New-AzureAdGroup.ps1"
+      ScriptArguments: '-AdGroupName $(AksAdminsGroupName) -AdRoleDefinitionName "$(AdRoleDefinitionName)" -UsersToAdd $(UsersToAdd)'
+      azurePowerShellVersion: "LatestVersion"
 
-- task: AzurePowerShell@5
-  name: SetADGroup
-  displayName: "AKS Admins Azure AD Group Creation and Role Assignment"
-  condition: eq(variables['SetADGroup.AksAadProfileAdminGroupObjectID'], '')
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/New-AzureAdGroup.ps1'
-    ScriptArguments: '-AdGroupName $(AksAdminsGroupName) -AdRoleDefinitionName "$(AdRoleDefinitionName)" -UsersToAdd $(UsersToAdd)'
-    azurePowerShellVersion: 'LatestVersion'
-    
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Create Azure Kubernetes Service'
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/AzureKubernetesService/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/AzureKubernetesService/parameters.json'
-    overrideParameters: >
-      -aksClusterName $(AksName)
-      -workspaceId $(LogAWorkspaceId)
-      -vnetSubnetID $(AksVnetSubnetId)
-      -location $(TargetRegion)
-      -aadProfileAdminGroupObjectID $(SetADGroup.AksAadProfileAdminGroupObjectID)
-      -aksClusterKubernetesVersion $(AksVersion)
-      -cuaId $(cuaId)
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployAzureKubernetesService-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Create Azure Kubernetes Service"
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/AzureKubernetesService/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/AzureKubernetesService/parameters.json"
+      overrideParameters: >
+        -aksClusterName $(AksName)
+        -workspaceId $(LogAWorkspaceId)
+        -vnetSubnetID $(AksVnetSubnetId)
+        -location $(TargetRegion)
+        -aadProfileAdminGroupObjectID $(SetADGroup.AksAadProfileAdminGroupObjectID)
+        -aksClusterKubernetesVersion $(AksVersion)
+        -cuaId $(cuaId)
+      deploymentMode: "Incremental"
+      deploymentName: "deployAzureKubernetesService-$(Build.BuildNumber)"
 
-- task: AzureCLI@2
-  displayName: "AKS Connection to ACR"
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    ScriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Set-AksLinkToAcr.ps1'
-    Arguments: '-AksName $(AksName) -ResourceGroupName $(TargetResourceGroupCore) -ACRName $(ACRName)'
+  - task: AzureCLI@2
+    displayName: "AKS Connection to ACR"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      ScriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Set-AksLinkToAcr.ps1"
+      Arguments: "-AksName $(AksName) -ResourceGroupName $(TargetResourceGroupCore) -ACRName $(ACRName)"
 
-- task: AzureCLI@2
-  displayName: "AKS Connection to App Gateway"
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    scriptType: 'pscore'
-    scriptLocation: 'scriptPath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Set-AksLinkToAgic.ps1'
-    Arguments: '-AksName $(AksName) -ResourceGroupName $(TargetResourceGroupCore) -AppGatewayResourceId $(IngressApplicationGatewayId)'
+  - task: AzureCLI@2
+    displayName: "AKS Connection to App Gateway"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      scriptType: "pscore"
+      scriptLocation: "scriptPath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Set-AksLinkToAgic.ps1"
+      Arguments: "-AksName $(AksName) -ResourceGroupName $(TargetResourceGroupCore) -AppGatewayResourceId $(IngressApplicationGatewayId)"

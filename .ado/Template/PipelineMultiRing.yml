@@ -6,38 +6,32 @@ trigger: none
 
 variables:
   - template: /.ado/Template/Variable/Variables-Core.yml
-  - template: /.ado/Template/Variable/Variables-Ring0.yml  
+  - template: /.ado/Template/Variable/Variables-Ring0.yml
   - template: /.ado/Template/Variable/Variables-Tel-MS.yml
 
 stages:
+  # STAGE - CREATE ARTIFACTS
+  - template: /.ado/Template/Stage/PublishArtifacts.yml
+    parameters:
+      stageName: "PublishArtifacts"
+      displayName: "Publish Artifacts"
+      environment: "${{variables.parameterRingN}}"
+      continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+      stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+      poolName: "${{variables.DeploymentGroupName}}"
+      varList: []
 
-# STAGE - CREATE ARTIFACTS
-- template: /.ado/Template/Stage/PublishArtifacts.yml
-  parameters:
-    stageName: "PublishArtifacts"
-    displayName: "Publish Artifacts"
-    environment: "${{variables.parameterRingN}}"
-    continueJobsOnError: "${{variables.ContinueJobsOnError}}"
-    stageCoreTimeout: "${{variables.StageCoreTimeout}}"
-    poolName: "${{variables.DeploymentGroupName}}"
-    varList: []
-
-# STAGE - RING 0
-- template: /.ado/Template/Stage/DeployFullRing.yml
-  parameters:
-    stageName: "Ring0"
-    displayName: "Deploy Ring 0"
-    environment: "Ring0"
-    condition: succeeded()
-    continueJobsOnError: "${{variables.ContinueJobsOnError}}"
-    stageCoreTimeout: "${{variables.StageCoreTimeout}}"
-    poolName: "appzring002"
-    varList: [
-          {
-            name: "/.ado/Template/Variable/Variables-Ring0.yml"
-          }
-    ]
-
+  # STAGE - RING 0
+  - template: /.ado/Template/Stage/DeployFullRing.yml
+    parameters:
+      stageName: "Ring0"
+      displayName: "Deploy Ring 0"
+      environment: "Ring0"
+      condition: succeeded()
+      continueJobsOnError: "${{variables.ContinueJobsOnError}}"
+      stageCoreTimeout: "${{variables.StageCoreTimeout}}"
+      poolName: "appzring002"
+      varList: [{ name: "/.ado/Template/Variable/Variables-Ring0.yml" }]
 # # STAGE - RING 1
 # - template: /.ado/Template/Stage/DeployFullRing.yml
 #   parameters:
@@ -84,4 +78,4 @@ stages:
 #           {
 #             name: "/.ado/Template/Variable/Variables-Ring3.yml"
 #           }
-#     ]    
+#     ]

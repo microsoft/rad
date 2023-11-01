@@ -1,23 +1,23 @@
 steps:
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate Jumpbox Deployment'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/VirtualMachine/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualMachine/parameters.json'
-    overrideParameters: >
-      -vmName $(JumpboxName)
-      -adminUsername $(adminUsername)
-      -virtualNetworkName $(HubVnetName)
-      -subnetName $(JumpboxSubnet)
-      -adminPassword "$(JumpboxPassword)"
-      -cuaId $(cuaId)
-    deploymentMode: 'Validation'
-    deploymentName: 'deployJumpbox-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate Jumpbox Deployment"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/VirtualMachine/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualMachine/parameters.json"
+      overrideParameters: >
+        -vmName $(JumpboxName)
+        -adminUsername $(adminUsername)
+        -virtualNetworkName $(HubVnetName)
+        -subnetName $(JumpboxSubnet)
+        -adminPassword "$(JumpboxPassword)"
+        -cuaId $(cuaId)
+      deploymentMode: "Validation"
+      deploymentName: "deployJumpbox-$(Build.BuildNumber)"

@@ -9,10 +9,10 @@ parameters:
 
 stages:
   - stage: ${{ parameters.stageName }}
-    displayName: '${{ parameters.displayName }}'
+    displayName: "${{ parameters.displayName }}"
     variables:
       - ${{ each item in parameters.varList }}:
-        - template: ${{ item.Name }}
+          - template: ${{ item.Name }}
     jobs:
       - template: /.ado/Template/Job/Deployment-v1.yml
         parameters:
@@ -25,11 +25,7 @@ stages:
           dependsOn: []
           poolName: ${{parameters.poolName}}
           varList: ${{parameters.varList}}
-          stepList: [            
-            {
-              template: "/.ado/Template/Step/Shared/sample.yml"
-            }
-          ]
+          stepList: [{ template: "/.ado/Template/Step/Shared/sample.yml" }]
 
       - template: /.ado/Template/Job/Deployment-v1.yml
         parameters:
@@ -39,43 +35,27 @@ stages:
           environment: ${{parameters.environment}}
           continueOnError: ${{parameters.continueJobsOnError}}
           timeoutInMinutes: ${{parameters.stageCoreTimeout}}
-          dependsOn: [
-            {
-              Name: "DeployRingInfra_0"
-            }            
-          ]
+          dependsOn: [{ Name: "DeployRingInfra_0" }]
           poolName: ${{parameters.poolName}}
           varList: ${{parameters.varList}}
           # ${{ if ne(variables.DeployAPIM, 'true') }}:
           #   stepList: []
-          # ${{ if eq(variables.DeployAPIM, 'true')}}: 
-          #   stepList: []  
-          stepList: [      
-            {
-              template: "/.ado/Template/Step/Shared/sample.yml"
-            }            
-          ]    
+          # ${{ if eq(variables.DeployAPIM, 'true')}}:
+          #   stepList: []
+          stepList: [{ template: "/.ado/Template/Step/Shared/sample.yml" }]
 
       - template: /.ado/Template/Job/Deployment-v1.yml
         parameters:
           jobName: "DeployRingInfra_2"
           displayName: "Deploy_RingInfra_2"
-          condition: succeeded()       
+          condition: succeeded()
           environment: ${{parameters.environment}}
           continueOnError: ${{parameters.continueJobsOnError}}
           timeoutInMinutes: ${{parameters.stageCoreTimeout}}
-          dependsOn: [
-            {
-              Name: "DeployRingInfra_1"
-            }            
-          ]
+          dependsOn: [{ Name: "DeployRingInfra_1" }]
           poolName: ${{parameters.poolName}}
           varList: ${{parameters.varList}}
-          stepList: [      
-            {
-              template: "/.ado/Template/Step/Shared/sample.yml"
-            }            
-          ]
+          stepList: [{ template: "/.ado/Template/Step/Shared/sample.yml" }]
 
       - template: /.ado/Template/Job/Deployment-v1.yml
         parameters:
@@ -85,18 +65,10 @@ stages:
           environment: ${{parameters.environment}}
           continueOnError: ${{parameters.continueJobsOnError}}
           timeoutInMinutes: ${{parameters.stageCoreTimeout}}
-          dependsOn: [
-            {
-              Name: "DeployRingInfra_2"
-            }    
-          ]
+          dependsOn: [{ Name: "DeployRingInfra_2" }]
           poolName: ${{parameters.poolName}}
           varList: ${{parameters.varList}}
-          stepList: [            
-            {
-              template: "/.ado/Template/Step/Shared/sample.yml"
-            }            
-          ]
+          stepList: [{ template: "/.ado/Template/Step/Shared/sample.yml" }]
 
       - template: /.ado/Template/Job/Deployment-v1.yml
         parameters:
@@ -106,24 +78,13 @@ stages:
           environment: ${{parameters.environment}}
           continueOnError: ${{parameters.continueJobsOnError}}
           timeoutInMinutes: ${{parameters.stageCoreTimeout}}
-          dependsOn: [
-            {
-              Name: "DeployRingInfra_0"
-            },
-            {
-              Name: "DeployRingInfra_1"
-            },
-            {
-              Name: "DeployRingInfra_2"
-            },
-            {
-              Name: "DeployRingInfra_3"
-            }               
-          ]
+          dependsOn:
+            [
+              { Name: "DeployRingInfra_0" },
+              { Name: "DeployRingInfra_1" },
+              { Name: "DeployRingInfra_2" },
+              { Name: "DeployRingInfra_3" },
+            ]
           poolName: ${{parameters.poolName}}
           varList: ${{parameters.varList}}
-          stepList: [            
-            {
-              template: "/.ado/Template/Step/Shared/sample.yml"
-            }            
-          ]
+          stepList: [{ template: "/.ado/Template/Step/Shared/sample.yml" }]

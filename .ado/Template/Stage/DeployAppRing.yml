@@ -9,15 +9,15 @@ parameters:
 
 stages:
   - stage: ${{ parameters.stageName }}
-    displayName: '${{ parameters.displayName }}'
+    displayName: "${{ parameters.displayName }}"
     variables:
       - ${{ each item in parameters.varList }}:
-        - template: ${{ item.Name }}
+          - template: ${{ item.Name }}
     jobs:
       - template: /.ado/Template/Job/Deployment-v1.yml
         parameters:
           jobName: "Deploy_App_1"
-          displayName: 'Deploy_App_1'
+          displayName: "Deploy_App_1"
           environment: ${{parameters.environment}}
           continueOnError: ${{parameters.continueJobsOnError}}
           timeoutInMinutes: ${{parameters.stageCoreTimeout}}
@@ -28,16 +28,12 @@ stages:
           #   stepList: []
           # ${{ if eq(variables.SomeVar, 'true') }}:
           #   stepList: []
-          stepList: [                 
-            {
-              template: "/.ado/Template/Step/Shared/sample.yml"
-            }
-          ]
+          stepList: [{ template: "/.ado/Template/Step/Shared/sample.yml" }]
 
       - template: /.ado/Template/Job/Deployment-v1.yml
         parameters:
           jobName: "Deploy_App_2"
-          displayName: 'Deploy_App_2'
+          displayName: "Deploy_App_2"
           environment: ${{parameters.environment}}
           continueOnError: ${{parameters.continueJobsOnError}}
           timeoutInMinutes: ${{parameters.stageCoreTimeout}}
@@ -48,8 +44,4 @@ stages:
           #   stepList: []
           # ${{ if eq(variables.SomeVar, 'true') }}:
           #   stepList: []
-          stepList: [          
-            {
-              template: "/.ado/Template/Step/Shared/sample.yml"
-            }  
-          ]               
+          stepList: [{ template: "/.ado/Template/Step/Shared/sample.yml" }]

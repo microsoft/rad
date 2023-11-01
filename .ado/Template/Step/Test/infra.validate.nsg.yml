@@ -1,79 +1,79 @@
 steps:
-- task: AzurePowerShell@5
-  name: UpdateHubVnetParameterFile
-  displayName: "Update Hub vNet Parameters File"
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
-    workingDirectory: '$(Agent.BuildDirectory)/drop'
-    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersHub.json'
-    azurePowerShellVersion: 'LatestVersion'
+  - task: AzurePowerShell@5
+    name: UpdateHubVnetParameterFile
+    displayName: "Update Hub vNet Parameters File"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      ScriptType: "FilePath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1"
+      workingDirectory: "$(Agent.BuildDirectory)/drop"
+      ScriptArguments: "-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersHub.json"
+      azurePowerShellVersion: "LatestVersion"
 
-- task: AzurePowerShell@5
-  name: UpdateSpokeVnetParameterFile
-  displayName: "Update Spoke vNet Parameters File"
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1'
-    workingDirectory: '$(Agent.BuildDirectory)/drop'
-    ScriptArguments: '-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersSpoke.json'
-    azurePowerShellVersion: 'LatestVersion'
+  - task: AzurePowerShell@5
+    name: UpdateSpokeVnetParameterFile
+    displayName: "Update Spoke vNet Parameters File"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      ScriptType: "FilePath"
+      ScriptPath: "$(Agent.BuildDirectory)/drop/Scripts/Update-ParamFile.ps1"
+      workingDirectory: "$(Agent.BuildDirectory)/drop"
+      ScriptArguments: "-VariablesFile $(Agent.BuildDirectory)/drop/.ado/Template/Variable/Variables-$(parameterRingN).yml -ParametersFile $(Agent.BuildDirectory)/drop/$(parametersPath)/VirtualNetwork/parametersSpoke.json"
+      azurePowerShellVersion: "LatestVersion"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate HUB Network Security Group Deployment'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parameters.json'
-    overrideParameters: >
-      -networkSecurityGroupName $(NetworkSecurityGroupNameHub)
-      -cuaId $(cuaId)
-    deploymentMode: 'Validation'
-    deploymentName: 'deployNetworkSecurityGroups-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate HUB Network Security Group Deployment"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parameters.json"
+      overrideParameters: >
+        -networkSecurityGroupName $(NetworkSecurityGroupNameHub)
+        -cuaId $(cuaId)
+      deploymentMode: "Validation"
+      deploymentName: "deployNetworkSecurityGroups-$(Build.BuildNumber)"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate Bastion Network Security Group Deployment'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parametersBastion.json'
-    overrideParameters: >
-      -networkSecurityGroupName $(NetworkSecurityGroupNameBastion)
-      -cuaId $(cuaId)
-    deploymentMode: 'Validation'
-    deploymentName: 'deployNetworkSecurityGroups-$(Build.BuildNumber)'    
-    
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate Spoke Network Security Group Deployment'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parameters.json'
-    overrideParameters: >
-      -networkSecurityGroupName $(NetworkSecurityGroupNameSpoke)
-      -cuaId $(cuaId)
-    deploymentMode: 'Validation'
-    deploymentName: 'deployNetworkSecurityGroups-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate Bastion Network Security Group Deployment"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parametersBastion.json"
+      overrideParameters: >
+        -networkSecurityGroupName $(NetworkSecurityGroupNameBastion)
+        -cuaId $(cuaId)
+      deploymentMode: "Validation"
+      deploymentName: "deployNetworkSecurityGroups-$(Build.BuildNumber)"
+
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate Spoke Network Security Group Deployment"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/NetworkSecurityGroups/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/NetworkSecurityGroups/parameters.json"
+      overrideParameters: >
+        -networkSecurityGroupName $(NetworkSecurityGroupNameSpoke)
+        -cuaId $(cuaId)
+      deploymentMode: "Validation"
+      deploymentName: "deployNetworkSecurityGroups-$(Build.BuildNumber)"

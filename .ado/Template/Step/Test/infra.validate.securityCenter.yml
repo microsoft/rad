@@ -1,17 +1,17 @@
 steps:
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate Azure Security Center Deployment'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/AzureSecurityCenter/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/AzureSecurityCenter/parameters.json'
-    overrideParameters: '-workspaceId $(LogAWorkspaceId) -scope $(SubscriptionScope)'
-    deploymentMode: 'Validation'
-    deploymentName: 'deployAzureSecurityCenter-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate Azure Security Center Deployment"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/AzureSecurityCenter/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/AzureSecurityCenter/parameters.json"
+      overrideParameters: "-workspaceId $(LogAWorkspaceId) -scope $(SubscriptionScope)"
+      deploymentMode: "Validation"
+      deploymentName: "deployAzureSecurityCenter-$(Build.BuildNumber)"

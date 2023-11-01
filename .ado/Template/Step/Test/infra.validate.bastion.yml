@@ -1,21 +1,21 @@
 steps:
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Validate AzureBastion Deployment'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Agent.BuildDirectory)/drop/ARM/AzureBastion/deploy.json'
-    csmParametersFile: '$(Agent.BuildDirectory)/drop/$(parametersPath)/AzureBastion/parameters.json'
-    overrideParameters: >
-      -azureBastionName $(azureBastionName)
-      -azureBastionPipName $(azureBastionName)
-      -vNetId $(bastionVNet)'
-      -cuaId $(cuaId)
-    deploymentMode: 'Validation'
-    deploymentName: 'deployBastion-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Validate AzureBastion Deployment"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Agent.BuildDirectory)/drop/ARM/AzureBastion/deploy.json"
+      csmParametersFile: "$(Agent.BuildDirectory)/drop/$(parametersPath)/AzureBastion/parameters.json"
+      overrideParameters: >
+        -azureBastionName $(azureBastionName)
+        -azureBastionPipName $(azureBastionName)
+        -vNetId $(bastionVNet)'
+        -cuaId $(cuaId)
+      deploymentMode: "Validation"
+      deploymentName: "deployBastion-$(Build.BuildNumber)"

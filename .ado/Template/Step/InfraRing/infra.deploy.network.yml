@@ -1,48 +1,47 @@
 steps:
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Deploy Virtual Network Hub"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Build.SourcesDirectory)/ARM/VirtualNetwork/deploy.json"
+      csmParametersFile: "$(Build.SourcesDirectory)/$(parametersPath)/VirtualNetwork/parametersHub.json"
+      overrideParameters: "-vNetName $(HubVnetName)"
+      deploymentMode: "Incremental"
+      deploymentName: "deployVirtualNetworkHub-$(Build.BuildNumber)"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Deploy Virtual Network Hub'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Build.SourcesDirectory)/ARM/VirtualNetwork/deploy.json'
-    csmParametersFile: '$(Build.SourcesDirectory)/$(parametersPath)/VirtualNetwork/parametersHub.json'
-    overrideParameters: '-vNetName $(HubVnetName)'
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployVirtualNetworkHub-$(Build.BuildNumber)'
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: "Deploy Virtual Network Spoke"
+    enabled: true
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "$(TargetSubscriptionConnection)"
+      subscriptionId: "$(SubscriptionId)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: "$(TargetResourceGroupCore)"
+      location: "$(TargetRegion)"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Build.SourcesDirectory)/ARM/VirtualNetwork/deploy.json"
+      csmParametersFile: "$(Build.SourcesDirectory)/$(parametersPath)/VirtualNetwork/parametersSpoke.json"
+      overrideParameters: "-vNetName $(SpokeVnetName)"
+      deploymentMode: "Incremental"
+      deploymentName: "deployVirtualNetworkSpoke-$(Build.BuildNumber)"
 
-- task: AzureResourceManagerTemplateDeployment@3
-  displayName: 'Deploy Virtual Network Spoke'
-  enabled: true
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: '$(TargetSubscriptionConnection)'
-    subscriptionId: '$(SubscriptionId)'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(TargetResourceGroupCore)'
-    location: '$(TargetRegion)'
-    templateLocation: 'Linked artifact'
-    csmFile: '$(Build.SourcesDirectory)/ARM/VirtualNetwork/deploy.json'
-    csmParametersFile: '$(Build.SourcesDirectory)/$(parametersPath)/VirtualNetwork/parametersSpoke.json'
-    overrideParameters: '-vNetName $(SpokeVnetName)'
-    deploymentMode: 'Incremental'
-    deploymentName: 'deployVirtualNetworkSpoke-$(Build.BuildNumber)'
-
-- task: AzurePowerShell@5
-  displayName: "Set Network Peering"
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    ScriptType: 'FilePath'
-    ScriptPath: 'Scripts/Set-VnetPeering.ps1'
-    ScriptArguments: >
-      -SourceVnetName $(HubVnetName)
-      -TargetVnetName $(SpokeVnetName)
-      -TargetResourceGroupName $(TargetResourceGroupCore)
-      -SourceVnetNameResourceGroupName $(TargetResourceGroupCore)
-    azurePowerShellVersion: 'LatestVersion'
+  - task: AzurePowerShell@5
+    displayName: "Set Network Peering"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      ScriptType: "FilePath"
+      ScriptPath: "Scripts/Set-VnetPeering.ps1"
+      ScriptArguments: >
+        -SourceVnetName $(HubVnetName)
+        -TargetVnetName $(SpokeVnetName)
+        -TargetResourceGroupName $(TargetResourceGroupCore)
+        -SourceVnetNameResourceGroupName $(TargetResourceGroupCore)
+      azurePowerShellVersion: "LatestVersion"

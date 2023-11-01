@@ -1,9 +1,8 @@
 steps:
-- checkout: self
-  path: CNA
-  clean: true
-  fetchDepth: 1
-
+  - checkout: self
+    path: CNA
+    clean: true
+    fetchDepth: 1
 # IF REQUIRED, COMPILE APP AND ADD BINARIES TO ARTIFACTS
 #
 

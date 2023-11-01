@@ -1,33 +1,32 @@
 steps:
+  - task: PowerShell@2
+    name: UpdateAppConfig
+    displayName: Update Kube Config and App Service Deployment Files
+    inputs:
+      filePath: "$(Agent.BuildDirectory)/drop/Scripts/Update-TemplateText.ps1"
+      workingDirectory: "$(Agent.BuildDirectory)/drop"
+      arguments: >
+        -FileList @(
+          "src\docker-compose-votingapp.yml", 
+          "src\azure-vote-all-in-one-redis.yaml", 
+          "src\node-api-microservice\src\docker-compose-node-api-app-service.yml"
+        ) 
+        -ReplacementList @{
+          "[[ACRLoginServer]]" = "$(ACRName).azurecr.io"; 
+          "[[IngressCertName]]" = "$(AksIngressCertSecretName)";
+          "[[BUILD_VERSION]]" = "$(Build.BuildNumber)"
+        }
 
-- task: PowerShell@2
-  name: UpdateAppConfig
-  displayName: Update Kube Config and App Service Deployment Files
-  inputs:
-    filePath: '$(Agent.BuildDirectory)/drop/Scripts/Update-TemplateText.ps1'
-    workingDirectory: '$(Agent.BuildDirectory)/drop'
-    arguments: >
-      -FileList @(
-        "src\docker-compose-votingapp.yml", 
-        "src\azure-vote-all-in-one-redis.yaml", 
-        "src\node-api-microservice\src\docker-compose-node-api-app-service.yml"
-      ) 
-      -ReplacementList @{
-        "[[ACRLoginServer]]" = "$(ACRName).azurecr.io"; 
-        "[[IngressCertName]]" = "$(AksIngressCertSecretName)";
-        "[[BUILD_VERSION]]" = "$(Build.BuildNumber)"
-      }
+  - task: AzureWebAppContainer@1
+    displayName: "Deploy Node App"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      appName: $(WebAppName)-node
+      multicontainerConfigFile: "$(Agent.BuildDirectory)/drop/src/node-api-microservice/src/docker-compose-node-api-app-service.yml"
 
-- task: AzureWebAppContainer@1
-  displayName: 'Deploy Node App'
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    appName: $(WebAppName)-node
-    multicontainerConfigFile: "$(Agent.BuildDirectory)/drop/src/node-api-microservice/src/docker-compose-node-api-app-service.yml"
-
-- task: AzureWebAppContainer@1
-  displayName: 'Deploy Voting App'
-  inputs:
-    azureSubscription: '$(TargetSubscriptionConnection)'
-    appName: $(WebAppName)
-    multicontainerConfigFile: "$(Agent.BuildDirectory)/drop/src/docker-compose-votingapp.yml"
+  - task: AzureWebAppContainer@1
+    displayName: "Deploy Voting App"
+    inputs:
+      azureSubscription: "$(TargetSubscriptionConnection)"
+      appName: $(WebAppName)
+      multicontainerConfigFile: "$(Agent.BuildDirectory)/drop/src/docker-compose-votingapp.yml"

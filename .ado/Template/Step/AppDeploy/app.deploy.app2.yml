@@ -1,9 +1,8 @@
 steps:
-- checkout: self
-  path: CNA
-  clean: true
-  fetchDepth: 1
-
+  - checkout: self
+    path: CNA
+    clean: true
+    fetchDepth: 1
 # - task: PowerShell@2
 #   name: UpdateAppConfig
 #   displayName: Update Kube Config and App Service Deployment Files
@@ -11,14 +10,14 @@ steps:
 #     filePath: 'Scripts/Update-TemplateText.ps1'
 #     arguments: >
 #       -FileList @(
-#         "src\docker-compose-votingapp.yml", 
-#         "src\azure-vote-all-in-one-redis.yaml", 
+#         "src\docker-compose-votingapp.yml",
+#         "src\azure-vote-all-in-one-redis.yaml",
 #         "src\node-api-deploy.yml",
 #         "src\node-api-microservice\src\docker-compose-node-api-app-service.yml",
 #         "src\tel-ms-deploy.yml"
-#       ) 
+#       )
 #       -ReplacementList @{
-#         "[[ACRLoginServer]]" = "$(ACRName).azurecr.io"; 
+#         "[[ACRLoginServer]]" = "$(ACRName).azurecr.io";
 #         "[[IngressCertName]]" = "$(AksIngressCertSecretName)"
 #       }
 

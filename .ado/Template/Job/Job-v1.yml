@@ -13,18 +13,18 @@ jobs:
   - job: ${{ parameters.jobName }}
     displayName: ${{ parameters.displayName }}
     condition: ${{parameters.condition}}
-    dependsOn: 
+    dependsOn:
       - ${{ each item in parameters.dependsOn }}:
-        - ${{ item.Name }}
+          - ${{ item.Name }}
     continueOnError: ${{parameters.continueJobsOnError}}
     timeoutInMinutes: ${{parameters.stageCoreTimeout}}
     variables:
       - ${{ each item in parameters.varList }}:
-        - template: ${{ item.Name }}
+          - template: ${{ item.Name }}
     pool:
-        name: ${{parameters.poolName}}
+      name: ${{parameters.poolName}}
     steps:
       - ${{ each item in parameters.stepList }}:
-        - template: ${{item.template}}
-          parameters:
-            deploymentMode: 'Incremental'
+          - template: ${{item.template}}
+            parameters:
+              deploymentMode: "Incremental"

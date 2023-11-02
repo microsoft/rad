@@ -68,8 +68,7 @@ Function Get-Value($YmlSourceFile, [string]$Name){
                 }
                 if ($o.Contains(" ")){
                     # $o = $o.Replace(" ","")
-                    $o = $o.TrimStart()
-                    $o = $o.TrimEnd()
+                    $o = $o.Trim()
                 }
                 return $o
             }

@@ -1,6 +1,6 @@
 # Release Automation & Development [RAD]
 
-This repository contains a templated and componentized CI/CD framework reference for Azure DevOps pipelines and GitHub Actions that can be used to easily create flexible and scalable enterprise ready pipelines.
+This repository contains a Microsoft open source CI/CD framework reference for Azure DevOps pipelines and GitHub Actions.  These reference pipelines use a template and componentized model to enable teams to quickly create flexible and scalable enterprise ready pipelines.
 
 # Business Problem
 

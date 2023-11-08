@@ -1,5 +1,9 @@
 # Release Automation & Development [RAD]
 
+# Summary
+
+This repository contains a templated and componentized CI/CD framework reference for Azure DevOps pipelines and GitHub Actions that can be used to easily create flexible and scalable enterprise ready pipelines.
+
 # Business Problem
 
 Big Bang releases are hard to develop, test, verify, and operate. Established DevOps principles indicate that teams should work in small batches and deploy as frequently as possible. Slow, manual release processes result in fewer deployments, which lead to even more troublesome deployments. Manual releases can introduce a plethora of problems. It is simply a realistic notion that we, as human beings, can't complete the same task 100 times and do it the same way each time. Combining the work of multiple developers is also a challenge. Software systems are complex, and an apparently simple, self-contained change to a single file can easily have unintended consequences which compromise the correctness of the system. 

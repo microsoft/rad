@@ -34,6 +34,11 @@ sudo chmod +x /usr/bin/kubectl
 
 sudo /usr/bin/pwsh -command "az config set extension.use_dynamic_install=yes_without_prompt"
 
+# INSTALL BICEP RUNTIME
+sudo curl -Lo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+sudo chmod +x ./bicep
+sudo sudo mv ./bicep /usr/local/bin/bicep
+
 # INSTALL RUNNER SOFTWARE
 cd /home/[[ADMIN_USER_NAME]]
 RUNNER_BINARY="actions-runner-linux-x64-2.310.2.tar.gz"

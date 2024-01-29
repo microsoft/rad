@@ -97,7 +97,7 @@
                 {
                     "name": "snet-appgw-001",
                     "addressPrefix": "10.0.21.0/24",
-                    "networkSecurityGroupName": "nsg-AppGw-[[AppName]]-[[InstanceNumber]]",
+                    "networkSecurityGroupName": "nsg-Spoke-[[AppName]]-[[InstanceNumber]]",
                     "routeTableName": "",
                     "serviceEndpoints": [
                         {

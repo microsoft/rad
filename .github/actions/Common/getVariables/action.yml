@@ -1,3 +1,4 @@
+
 name: "Get Variables"
 description: "Get environment variables from file(s)"
 
@@ -24,6 +25,7 @@ runs:
         path: ".github/Variables/Variables-${{ inputs.target-ring }}.env"
 
     - run: |
+        sudo apt-get update
         sudo apt-get install -y jq
         output=$(echo '${{ steps.parse-ring-variables.outputs.json }}' | jq -s add)
         echo "These are variables: ${output}"
